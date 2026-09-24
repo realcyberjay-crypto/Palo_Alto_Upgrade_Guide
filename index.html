@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAN-OS Upgrade Runbook &middot; CyberJay</title>
+<!--
+  ==========================================================================
+  PAN-OS UPGRADE RUNBOOK (CLI + GUI, 11.x -> 12.1) - single file, offline, searchable
+  ==========================================================================
+  TO ADD A NEW TOPIC (index + search rebuild themselves - don't edit the nav):
+
+    <section class="topic" id="unique-id" data-group="HA Upgrade" data-tag="STEP">
+      <div class="topic-head">
+        <span class="eyebrow">HA Upgrade</span>
+        <span class="tag">STEP</span>
+        <h2>My Topic Title</h2>
+      </div>
+      ...content...
+    </section>
+
+  data-group = index heading it sits under (new names created automatically)
+  data-tag   = optional chip shown beside the title
+  ==========================================================================
+-->
+<style>
+:root{
+  --bg:#0b1622; --panel:#101f2f; --panel-2:#152a3d; --line:#1f3b52;
+  --text:#e4edf4; --muted:#8ba3b8; --teal:#2ec4b6; --amber:#ffb703;
+  --red:#ff6b6b; --green:#5bd68a;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+header.top{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#0d1b29,#0b1622);
+  border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);white-space:nowrap}
+.brand b{color:var(--amber);font-weight:600}
+.searchwrap{flex:1;min-width:220px;position:relative}
+#search{width:100%;padding:9px 12px 9px 34px;border-radius:7px;border:1px solid var(--line);
+  background:#0a1420;color:var(--text);font-family:var(--mono);font-size:13.5px;outline:none}
+#search:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(46,196,182,.18)}
+.searchwrap::before{content:"⌕";position:absolute;left:12px;top:7px;color:var(--muted);font-size:16px}
+#count{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+#menubtn{display:none;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+  border-radius:6px;padding:7px 11px;font-family:var(--mono);font-size:13px;cursor:pointer}
+.wrap{display:flex;align-items:flex-start;max-width:1500px;margin:0 auto}
+nav.index{width:290px;flex:0 0 290px;position:sticky;top:57px;height:calc(100vh - 57px);
+  overflow-y:auto;border-right:1px solid var(--line);padding:18px 10px 60px 18px}
+nav.index h4{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--amber);margin:20px 0 7px;padding-left:4px}
+nav.index h4:first-child{margin-top:0}
+nav.index a{display:block;color:var(--muted);text-decoration:none;font-size:13.4px;padding:4px 8px;
+  border-radius:5px;border-left:2px solid transparent;line-height:1.4}
+nav.index a:hover{color:var(--text);background:var(--panel-2)}
+nav.index a.active{color:var(--teal);border-left-color:var(--teal);background:rgba(46,196,182,.07)}
+main{flex:1;min-width:0;padding:26px 30px 120px}
+.hero{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:22px 24px;margin-bottom:26px}
+.hero h1{margin:0 0 6px;font-size:27px;letter-spacing:-.01em}
+.hero p{margin:0;color:var(--muted);max-width:78ch}
+.hero .kbd{font-family:var(--mono);font-size:12px;background:#0a1420;border:1px solid var(--line);
+  border-radius:4px;padding:1px 6px;color:var(--teal)}
+section.topic{border:1px solid var(--line);background:var(--panel);border-radius:11px;
+  padding:20px 24px 22px;margin-bottom:18px;scroll-margin-top:72px}
+.topic-head{border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:15px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--amber);
+  border:1px solid rgba(255,183,3,.4);border-radius:4px;padding:1px 6px;margin-left:8px}
+.topic h2{margin:6px 0 0;font-size:20.5px;letter-spacing:-.01em}
+.topic h3{font-size:15px;margin:20px 0 7px;color:var(--teal);font-family:var(--mono);letter-spacing:.03em;text-transform:uppercase}
+.topic p{margin:9px 0}
+.topic ul,.topic ol{margin:9px 0;padding-left:22px}
+.topic li{margin:5px 0}
+code{font-family:var(--mono);font-size:.9em;background:#0a1420;border:1px solid var(--line);
+  border-radius:4px;padding:1px 5px;color:var(--teal)}
+pre.cli{background:#080f18;border:1px solid var(--line);border-left:3px solid var(--teal);
+  border-radius:7px;padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:13px;
+  line-height:1.55;color:#cfe3f0;margin:12px 0}
+pre.cli b{color:var(--amber);font-weight:600}
+pre.cli i{color:var(--muted);font-style:normal}
+pre.cli u{color:var(--green);text-decoration:none}
+.human{background:rgba(255,183,3,.06);border:1px solid rgba(255,183,3,.28);border-radius:8px;padding:12px 16px;margin:14px 0}
+.human::before{content:"IN HUMAN TERMS";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--amber);margin-bottom:5px}
+.human p{margin:5px 0}
+.note{background:rgba(46,196,182,.06);border:1px solid rgba(46,196,182,.28);border-radius:8px;padding:12px 16px;margin:14px 0}
+.note::before{content:"FIELD NOTE";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--teal);margin-bottom:5px}
+.warn{background:rgba(255,107,107,.07);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:12px 16px;margin:14px 0}
+.warn::before{content:"WATCH OUT";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--red);margin-bottom:5px}
+.tbl{width:100%;overflow-x:auto;margin:13px 0}
+table{border-collapse:collapse;width:100%;font-size:13.6px;min-width:520px}
+th{background:var(--panel-2);color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;text-align:left;padding:9px 11px;border:1px solid var(--line)}
+td{padding:8px 11px;border:1px solid var(--line);vertical-align:top}
+td:first-child{font-family:var(--mono);color:var(--teal);white-space:nowrap}
+tbody tr:nth-child(even){background:rgba(255,255,255,.018)}
+figure{margin:16px 0;border:1px solid var(--line);background:#08121c;border-radius:9px;padding:14px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:9px;text-align:center}
+ol.steps{list-style:none;padding-left:0;counter-reset:s}
+ol.steps>li{counter-increment:s;position:relative;padding-left:42px;margin:12px 0;border-left:1px solid var(--line);padding-bottom:4px}
+ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:-15px;top:0;
+  background:var(--panel-2);border:1px solid var(--teal);color:var(--teal);font-family:var(--mono);
+  font-size:11px;border-radius:5px;padding:2px 6px}
+ol.steps b{color:var(--amber)}
+mark{background:rgba(255,183,3,.32);color:#fff;border-radius:2px;padding:0 2px}
+.hidden{display:none!important}
+#empty{display:none;text-align:center;color:var(--muted);font-family:var(--mono);padding:60px 0}
+@media(max-width:900px){
+  #menubtn{display:block}
+  nav.index{position:fixed;left:0;top:57px;background:var(--panel);width:280px;flex-basis:280px;z-index:40;
+    transform:translateX(-102%);transition:transform .2s ease}
+  nav.index.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.6)}
+  main{padding:18px 15px 100px}
+  .hero h1{font-size:22px}
+}
+.kid{background:rgba(91,214,138,.06);border:1px solid rgba(91,214,138,.3);border-radius:8px;padding:12px 16px;margin:14px 0}
+.kid::before{content:"LIKE I'M SIX";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--green);margin-bottom:5px}
+.kid p{margin:5px 0}
+.gui{background:rgba(139,163,184,.06);border:1px solid rgba(139,163,184,.3);border-radius:8px;padding:12px 16px;margin:14px 0}
+.gui::before{content:"GUI PATH";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--muted);margin-bottom:5px}
+.gui p,.gui li{margin:4px 0}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button id="menubtn" aria-label="Toggle index">&#9776;</button>
+  <div class="brand">CyberJay <b>&middot;</b> PAN-OS UPGRADE</div>
+  <div class="searchwrap"><input id="search" placeholder="Search  (press / )  e.g. suspend, preemptive, chassis-ready, rollback, Panorama, Group HA Peers, backup" autocomplete="off"></div>
+  <div id="count"></div>
+</header>
+
+<div class="wrap">
+  <nav class="index" id="nav"></nav>
+  <main>
+
+    <div class="hero">
+      <h1>Palo Alto Networks &mdash; PAN-OS Upgrade Runbook &mdash; CLI + GUI &middot; 11.x &rarr; 12.1</h1>
+      <p>An upgrade is four commands and a great deal of sequencing. This runbook covers both paths &mdash; an HA pair where the trick is that only one peer is ever out of service, and a standalone firewall where the reboot is simply an outage you plan around. Start with <b>Plan First</b> to work out what kind of upgrade you are doing and which path to take. Every step shows the CLI command with its GUI path beside it, animated diagrams show what the HA links and each peer are doing, and green <b>LIKE I&rsquo;M SIX</b> boxes explain each idea in plain words. Checked against Palo Alto TechDocs (September 2026), with the commands that are wrong in most circulating runbooks called out explicitly. Press <span class="kbd">/</span> to search.</p>
+    </div>
+
+    <!-- ==================== CONTENT ==================== -->
+
+    <!-- ---------- GROUP: Plan First ---------- -->
+
+    <section class="topic" id="upgrade-type" data-group="Plan First" data-tag="START HERE">
+  <div class="topic-head"><span class="eyebrow">Plan First</span><span class="tag">START HERE</span>
+    <h2>Which Kind of Upgrade Is This?</h2></div>
+<div class="kid"><p>A version number is an address: <b>12</b> is the city, <b>.1</b> is the street, <b>.4</b> is the house, <b>-h2</b> is a new coat of paint on the same house. Moving house on the same street is easy. Moving to another city needs a map.</p></div>
+<pre class="cli"><i>Reading a PAN-OS version:</i>
+   <b>11 . 1 . 4 - h13</b>
+    |    |   |    |
+    |    |   |    +-- HOTFIX       urgent fixes on top of a maintenance release
+    |    |   +------- MAINTENANCE  bug fixes, same features
+    |    +----------- FEATURE      new features, new behaviour
+    +---------------- MAJOR        new generation (11 -&gt; 12)</pre>
+<div class="tbl"><table><thead><tr><th>Upgrade type</th><th>Example</th><th>Path planning?</th><th>HA version-gap risk?</th><th>Rollback</th><th>Follow</th></tr></thead><tbody>
+<tr><td>Hotfix</td><td>11.1.4-h7 &rarr; 11.1.4-h13</td><td>No &mdash; but base 11.1.0 must be on disk</td><td>No</td><td>Easy</td><td><a href="#patch-route">Patch Route</a></td></tr>
+<tr><td>Maintenance</td><td>11.1.4 &rarr; 11.1.10</td><td>No</td><td>No</td><td>Easy</td><td><a href="#patch-route">Patch Route</a></td></tr>
+<tr><td>Feature</td><td>11.1.x &rarr; 11.2.x</td><td>Yes</td><td>Only if peers end up 2+ releases apart</td><td>Harder &mdash; needs the exported config</td><td><a href="#check-path">Check the Path</a>, then the full runbook</td></tr>
+<tr><td>Major</td><td>11.x &rarr; 12.1</td><td>Yes &mdash; plus hardware support</td><td>Yes, if skipping on an HA pair</td><td>Harder</td><td><a href="#check-path">Check the Path</a>, <a href="#go-12">Going to 12.1</a>, full runbook</td></tr>
+</tbody></table></div>
+<div class="note"><p>There is no PAN-OS 11.3 or 11.4. The feature releases run 10.1 &rarr; 10.2 &rarr; 11.0 &rarr; 11.1 &rarr; 11.2 &rarr; 12.1. When someone says "11.1 to 11.4" they almost always mean 11.1.x to 11.1.4 &mdash; a maintenance upgrade.</p></div>
+</section>
+
+    <section class="topic" id="check-path" data-group="Plan First" data-tag="MAJOR / FEATURE">
+  <div class="topic-head"><span class="eyebrow">Plan First</span><span class="tag">MAJOR / FEATURE</span>
+    <h2>How to Check the Upgrade Path &mdash; Seven Checks</h2></div>
+<div class="kid"><p>Before a long car trip you check four things: does the car go that far, which roads are open, where you must stop, and whether the people at home know you are coming. This page is that check list.</p></div>
+<ol class="steps">
+<li><b>Read what you run today.</b> CLI: <code>show system info | match "model|sw-version"</code>. GUI: Dashboard &rarr; General Information, or Device &rarr; Software (tick in <i>Currently Installed</i>).</li>
+<li><b>Can the hardware run the target?</b> TechDocs &rarr; <i>Compatibility Matrix &rarr; Supported OS Releases by Model</i>. If your model has no tick under the target, stop &mdash; this is a hardware refresh, not an upgrade. Check the <i>End-of-Life Summary</i> for the support end date of the target too.</li>
+<li><b>Pick the target build, not just the release.</b> Use Palo Alto's <i>Support PAN-OS Software Release Guidance</i> (LIVEcommunity) for the currently <b>preferred</b> maintenance release. On 11.1.3 and later, Device &rarr; Software &rarr; clear <b>Base Releases</b> to show preferred releases only.</li>
+<li><b>Read the path table.</b> TechDocs &rarr; <i>PAN-OS Upgrade Guide &rarr; Determine the Upgrade Path</i>, with the version filter set to your target. Summary below.</li>
+<li><b>Panorama and friends first.</b> Panorama, Log Collectors and WildFire appliances must be on the same or a later release than the firewalls. Check <i>Panorama, Log Collector, Firewall, and WildFire Version Compatibility</i>, and any plugin version tables (SD-WAN, DLP).</li>
+<li><b>Read the notes for every release on the path</b> &mdash; including releases you skip. Release Notes (known issues, minimum content version), <i>Upgrade/Downgrade Considerations</i> and <i>Changes to Default Behavior</i>.</li>
+<li><b>Run the upgrade check report</b> (standalone or from Panorama for managed firewalls) and clear its warnings before the window.</li>
+</ol>
+<h3>The path table in one view</h3>
+<div class="tbl"><table><thead><tr><th>Running today</th><th>Documented path (standalone / Panorama-managed)</th></tr></thead><tbody>
+<tr><td>11.0 / 11.1 / 11.2</td><td>Skip Software Version &rarr; directly to 12.1.</td></tr>
+<tr><td>10.2.x</td><td>Skip directly up to 11.2. Then 11.2 &rarr; 12.1 as a second hop.</td></tr>
+<tr><td>10.1.x</td><td>Skip up to three releases &mdash; directly up to 11.1. Then onward.</td></tr>
+<tr><td>10.0.x and older</td><td>One release at a time: install the latest <b>preferred</b> maintenance release of each, until you reach 10.1, then skip.</td></tr>
+</tbody></table></div>
+<div class="warn"><p>HA pairs: the skip feature is documented for standalone and Panorama-managed devices, and HA peers two or more feature releases apart suspend the older one (<i>Peer version too old</i>). Step HA pairs one feature release at a time unless TAC confirms otherwise. See <a href="#go-12">Going to 12.1</a>.</p></div>
+<h3>Two rules from the upgrade guide worth memorising</h3>
+<ul>
+<li>Upgrade <b>from the latest maintenance release</b> of each release on your path, not from an old build.</li>
+<li><b>Never install a base image</b> (x.y.0) unless it is your final target. Download it; do not install it.</li>
+</ul>
+<h3>Worked examples</h3>
+<div class="tbl"><table><thead><tr><th>From &rarr; to</th><th>Standalone</th><th>HA pair</th></tr></thead><tbody>
+<tr><td>11.2.x &rarr; 12.1</td><td>1 hop</td><td>1 hop</td></tr>
+<tr><td>11.1.x &rarr; 12.1</td><td>1 hop (skip)</td><td>2 hops: 11.2, then 12.1</td></tr>
+<tr><td>10.2.x &rarr; 12.1</td><td>2 hops: skip to 11.2, then 12.1</td><td>3 hops: 11.1, 11.2, 12.1</td></tr>
+<tr><td>PA-3200 on 11.1 &rarr; 12.1</td><td colspan="2">Not possible &mdash; PA-3200 stops at 11.1.</td></tr>
+</tbody></table></div>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; <b>Check Now</b>. What the box offers is the final word: if the target is not listed after Check Now, the box cannot reach it in one hop.</li></ul></div>
+</section>
+
+    <section class="topic" id="patch-route" data-group="Plan First" data-tag="PATCH / MAINTENANCE">
+  <div class="topic-head"><span class="eyebrow">Plan First</span><span class="tag">PATCH / MAINTENANCE</span>
+    <h2>Patch and Maintenance Upgrades &mdash; The Short Route</h2></div>
+<div class="kid"><p>Same house, fresh paint. You still move the furniture out of the way first (backup), and you still check the paint is dry before anyone leans on the wall (chassis-ready).</p></div>
+<p>For a jump inside one feature release &mdash; 11.1.4 &rarr; 11.1.10, or 11.1.4-h7 &rarr; 11.1.4-h13 &mdash; the procedure is the same as the full runbook, minus the planning.</p>
+<div class="tbl"><table><thead><tr><th>Section</th><th>Patch upgrade?</th></tr></thead><tbody>
+<tr><td>Pre-Change Checklist, Remote Access, Capture State, Backup</td><td>Yes &mdash; all of it</td></tr>
+<tr><td>Disk Space</td><td>Yes &mdash; and do not delete the base image (x.y.0)</td></tr>
+<tr><td>Software and Content</td><td>Yes &mdash; check the target's minimum content version</td></tr>
+<tr><td>HA Links, HA Preparation, HA Upgrade</td><td>Yes &mdash; same suspend / install / functional sequence</td></tr>
+<tr><td>Check the Path, Going to 12.1</td><td>Skip</td></tr>
+<tr><td>Rollback</td><td>Use <i>Reverting to a Previous Maintenance Release</i> only</td></tr>
+</tbody></table></div>
+<pre class="cli"><i>The whole patch on one peer (HA: after suspend; standalone: this IS the outage at the reboot):</i>
+admin@fw-01&gt; <b>request system software check</b>                         <i>refresh the list</i>
+admin@fw-01&gt; <b>request system software info</b>                          <i>base image (x.y.0) must say Downloaded yes for a hotfix target</i>
+admin@fw-01&gt; <b>request system software download version &lt;target&gt;</b>   <i>non-disruptive</i>
+admin@fw-01&gt; <b>request system software install version &lt;target&gt;</b>    <i>wait for FIN / OK in show jobs id</i>
+admin@fw-01&gt; <b>request restart system</b>                                 <i>the reboot</i>
+admin@fw-01&gt; <b>show chassis-ready</b>                                     <i>yes = dataplane up</i></pre>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; Check Now &rarr; <b>Download</b> (base first if needed) &rarr; <b>Install</b> &rarr; reboot when prompted.</li></ul></div>
+<div class="note"><p>Two peers on different maintenance builds of the same release for a few minutes is normal. Still finish both peers in the same window.</p></div>
+<div class="note"><p>Palo Alto also documents a separate <i>Install a PAN-OS Software Patch</i> procedure with its own revert steps. This runbook does not cover it; follow that page if you use it.</p></div>
+</section>
+
+    <section class="topic" id="plan-sheet" data-group="Plan First" data-tag="WORKSHEET">
+  <div class="topic-head"><span class="eyebrow">Plan First</span><span class="tag">WORKSHEET</span>
+    <h2>Planning Worksheet &mdash; Fill It In Before the Change Request</h2></div>
+<div class="kid"><p>Write your shopping list before you go to the shop. At 2am you will not remember what you meant to buy.</p></div>
+<div class="tbl"><table><thead><tr><th>Item</th><th>Fill in</th><th>Where it comes from</th></tr></thead><tbody>
+<tr><td>Hostnames / model / serial</td><td>&nbsp;</td><td><code>show system info</code></td></tr>
+<tr><td>HA mode</td><td>Standalone &middot; A/P &middot; A/A</td><td><code>show high-availability state</code></td></tr>
+<tr><td>Current version</td><td>&nbsp;</td><td><code>show system info | match sw-version</code></td></tr>
+<tr><td>Target build (preferred?)</td><td>&nbsp;</td><td>Release Guidance, Device &rarr; Software</td></tr>
+<tr><td>Hops</td><td>&nbsp;</td><td><a href="#check-path">Check the Path</a></td></tr>
+<tr><td>Images to download</td><td>base + target for each hop</td><td>Path table</td></tr>
+<tr><td>Minimum content version</td><td>&nbsp;</td><td>Target release notes</td></tr>
+<tr><td>Panorama / LC / WildFire version</td><td>&ge; target?</td><td>Panorama &rarr; Managed Devices, compatibility matrix</td></tr>
+<tr><td>Preemption before change</td><td>yes / no</td><td><code>show high-availability state | match Preempt</code></td></tr>
+<tr><td>Free space panrepo / pancfg</td><td>pancfg &lt; 90%</td><td><code>show system disk-space</code></td></tr>
+<tr><td>Rollback version + backup file names</td><td>&nbsp;</td><td>Backup section</td></tr>
+<tr><td>Out-of-band access tested</td><td>yes / no</td><td>Remote Access section</td></tr>
+</tbody></table></div>
+</section>
+
+    <!-- ---------- GROUP: Orientation ---------- -->
+
+    <section class="topic" id="reading-this-guide" data-group="Orientation" data-tag="START HERE">
+  <div class="topic-head"><span class="eyebrow">Orientation</span><span class="tag">START HERE</span>
+    <h2>How to Read the Command Blocks</h2></div>
+<p>New to Palo Alto? Every command block in this guide uses the same three colours. Once you know them you can read any block at a glance.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show system info | match sw-version</b>            <i>what the command does</i>
+<u>sw-version: 11.1.x-hN</u>
+</pre>
+<div class="tbl"><table><thead><tr><th>Colour</th><th>Means</th></tr></thead><tbody>
+<tr><td>Amber</td><td>The command you type.</td></tr>
+<tr><td>Grey</td><td>Plain-English explanation. Not typed — it is a note to you.</td></tr>
+<tr><td>Green</td><td>Output you should expect back from the firewall.</td></tr>
+</tbody></table></div>
+<h3>The prompt tells you three things</h3>
+<pre class="cli"><u>admin@fw-01(active)&gt;</u>
+     <i>|      |       |</i>
+     <i>|      |       +-- MODE: &gt; is operational, # is configuration</i>
+     <i>|      +---------- HA ROLE: active, passive, suspended, or blank if standalone</i>
+     <i>+----------------- HOSTNAME: which firewall you are actually on</i></pre>
+<div class="tbl"><table><thead><tr><th>Prompt</th><th>Where you are</th></tr></thead><tbody>
+<tr><td>&gt;</td><td><b>Operational mode.</b> Look at things, run actions. Nothing here is saved config.</td></tr>
+<tr><td>#</td><td><b>Configuration mode.</b> You got here with <code>configure</code>. Changes are staged until you <code>commit</code>.</td></tr>
+</tbody></table></div>
+<h3>Four verbs cover almost everything</h3>
+<div class="tbl"><table><thead><tr><th>Verb</th><th>What it does</th></tr></thead><tbody>
+<tr><td>show</td><td>Read-only. Safe to run any time, on any box, including during a change.</td></tr>
+<tr><td>request</td><td>Do something now — download, install, reboot, suspend. Not saved config, but it acts immediately.</td></tr>
+<tr><td>set</td><td>Configuration mode only. Stages a change that does nothing until you <code>commit</code>.</td></tr>
+<tr><td>delete</td><td>Removes something — a config line in # mode, or a file in &gt; mode.</td></tr>
+</tbody></table></div>
+<div class="human"><p><code>show</code> is looking. <code>request</code> is doing. <code>set</code> is writing on a draft that nobody sees until <code>commit</code> publishes it.</p></div>
+<div class="note"><p>Press <b>Tab</b> at any point to complete a command, and <b>?</b> to see the valid options from where you are. On an unfamiliar release this beats guessing &mdash; the firewall will tell you exactly what it accepts.</p></div>
+</section>
+
+    <section class="topic" id="how-to-use" data-group="Orientation" data-tag="SCOPE">
+  <div class="topic-head"><span class="eyebrow">Orientation</span><span class="tag">SCOPE</span>
+    <h2>What This Runbook Covers</h2></div>
+<div class="kid"><p>An HA pair is two firewalls holding hands &mdash; one can take a nap (reboot) while the other keeps working. A standalone firewall is one firewall alone &mdash; when it naps, the door is closed.</p></div>
+<p>Two upgrade paths live in this document. Every step is shown in CLI with the web-interface path beside it in a <b>GUI PATH</b> box, and the Firewall GUI and Panorama GUI groups walk the whole change click-by-click. Both paths assume you can reach the management plane, and both assume the firewall can reach <code>updates.paloaltonetworks.com</code> or that you have already uploaded the image manually.</p>
+<div class="tbl"><table><thead><tr><th>Path</th><th>Use when</th><th>Traffic impact</th></tr></thead><tbody>
+<tr><td>HA pair</td><td>Two firewalls in active/passive or active/active</td><td>Brief failover blips only, if sequenced correctly</td></tr>
+<tr><td>Standalone</td><td>Single firewall, no peer</td><td>Full outage for the duration of the reboot</td></tr>
+</tbody></table></div>
+<p>Every command below has been checked against the current PAN-OS Upgrade Guide and the PAN-OS CLI reference. Where a widely-circulated runbook command is <b>wrong on modern PAN-OS</b>, it is called out in <a href="#syntax-corrections">Syntax Corrections</a> rather than silently fixed — you will meet the old form in other people's documents.</p>
+<div class="note"><p>Version strings in this guide use <code>&lt;target&gt;</code> as a placeholder. Substitute your actual target — for example <code>11.2.x-hN</code> or <code>12.1.x</code>. Do not copy a version number out of a runbook; read it off your own upgrade path.</p></div>
+</section>
+
+    <section class="topic" id="upgrade-path" data-group="Orientation" data-tag="PLANNING">
+  <div class="topic-head"><span class="eyebrow">Orientation</span><span class="tag">PLANNING</span>
+    <h2>The Upgrade Path — Rules That Bite Before You Type Anything</h2></div>
+<p>PAN-OS will not let you jump wherever you like. Three constraints govern the path, and violating any of them turns a clean maintenance window into a long night.</p>
+<ol class="steps">
+<li><b>You can now skip feature releases &mdash; within limits.</b> The Skip Software Version Upgrade feature (PAN-OS 10.1 and later) lets a firewall jump up to three releases. Palo Alto's current path table says 11.0, 11.1 and 11.2 can go <mark>directly to 12.1</mark>. Older releases (10.0 and earlier) still climb one step at a time. See <a href="#go-12">Going to PAN-OS 12.1</a>.</li>
+<li><b>A hotfix needs its base image on the box.</b> To land on <code>11.1.4-h13</code> the firewall must already have <code>11.1.0</code> downloaded. The base image only needs downloading, not installing.</li>
+<li><b>HA peers cannot drift more than one feature release apart.</b> When they do, <mark>the older peer suspends itself</mark> with the message <i>Peer version too old</i>. If your path has multiple hops, both peers must land on each intermediate release before you move on. <b>This is the rule that collides with skipping</b> &mdash; an HA pair jumping 11.1 &rarr; 12.1 is two releases apart mid-change. See the HA warning in <a href="#go-12">Going to PAN-OS 12.1</a>.</li>
+</ol>
+<div class="human"><p>Think of it as a staircase with no handrail. On old releases you can only take one step at a time, you must both be standing on the same step before either of you climbs again, and the step has to be delivered before you can stand on it.</p></div>
+<pre class="cli"><i>Read the currently installed version and the content versions in one shot:</i>
+admin@fw-01(active)&gt; <b>show system info | match "sw-version|app-version|threat-version|hostname"</b>  <i>version and content in one line — your baseline record</i>
+<u>hostname: fw-01</u>
+<u>sw-version: 11.1.x-hN</u>
+<u>app-version: 8951-9143</u>
+<u>threat-version: 8951-9143</u></pre>
+<div class="warn"><p>The release notes for every version you pass through list minimum content release requirements and known issues. Reading only the release notes for your <b>final</b> target is the single most common planning mistake.</p></div>
+</section>
+
+    <section class="topic" id="go-12" data-group="Orientation" data-tag="11.x &rarr; 12.1">
+  <div class="topic-head"><span class="eyebrow">Orientation</span><span class="tag">11.x &rarr; 12.1</span>
+    <h2>Going to PAN-OS 12.1 &mdash; Checks Before You Plan the Window</h2></div>
+<div class="kid"><p>Before you buy new shoes, check they come in your size. Some older firewalls simply do not come in size 12 &mdash; no amount of upgrading will fit them.</p></div>
+<h3>1 &middot; Can the hardware run 12.x at all?</h3>
+<div class="tbl"><table><thead><tr><th>Model</th><th>Last PAN-OS it supports</th><th>12.1?</th></tr></thead><tbody>
+<tr><td>PA-220 / PA-220R</td><td>10.2</td><td>No</td></tr>
+<tr><td>PA-3200 Series</td><td>11.1</td><td>No &mdash; stay on 11.1 or refresh hardware</td></tr>
+<tr><td>PA-5200 Series</td><td>11.2</td><td>No &mdash; 11.2 is the ceiling</td></tr>
+<tr><td>PA-7000 Series</td><td>11.2 (card-dependent)</td><td>No</td></tr>
+<tr><td>PA-400 / PA-3400 / PA-5400 / PA-5450, VM-Series</td><td>12.x</td><td>Yes</td></tr>
+</tbody></table></div>
+<div class="warn"><p>Per the Palo Alto compatibility matrix, <b>12.x support begins at 12.1.2</b>. Never target 12.1.0 or 12.1.1. Re-check your exact model in <i>Compatibility Matrix &rarr; Supported OS Releases by Model</i> before the change &mdash; the table above is a summary, not a substitute.</p></div>
+<h3>2 &middot; Which path?</h3>
+<div class="tbl"><table><thead><tr><th>Running today</th><th>Standalone / Panorama-managed</th><th>HA pair (safe default)</th></tr></thead><tbody>
+<tr><td>11.2.x</td><td>Direct to 12.1 (skip)</td><td>Direct to 12.1 &mdash; one feature release apart, normal HA rules</td></tr>
+<tr><td>11.1.x</td><td>Direct to 12.1 (skip)</td><td>11.1 &rarr; 11.2 &rarr; 12.1, both peers on each step</td></tr>
+<tr><td>11.0.x</td><td>Direct to 12.1 (skip)</td><td>11.0 &rarr; 11.1 &rarr; 11.2 &rarr; 12.1, or confirm skip support for HA with TAC</td></tr>
+</tbody></table></div>
+<div class="warn"><p><b>HA + skip is the open question.</b> The Skip Software Version feature is documented for standalone and Panorama-managed devices. The HA rule says peers two or more feature releases apart suspend the older one with <i>Peer version too old</i>. If you skip 11.1 &rarr; 12.1 on an HA pair, the peers sit two releases apart between the first and second reboot &mdash; with <b>no redundancy</b> while that lasts. Until the 12.1 HA upgrade page or TAC confirms otherwise, step HA pairs through 11.2.</p></div>
+<h3>3 &middot; How a skip actually works</h3>
+<pre class="cli"><i>Download the target's base image and the target. Install ONLY the target.</i>
+admin@fw-01&gt; <b>request system software check</b>                          <i>refresh the list — skip-eligible 12.1 releases should now appear</i>
+admin@fw-01&gt; <b>request system software download version 12.1.0</b>        <i>base image — download only, never install</i>
+admin@fw-01&gt; <b>request system software download version &lt;12.1 target&gt;</b> <i>the release you will actually run</i>
+admin@fw-01&gt; <b>request system software install version &lt;12.1 target&gt;</b>  <i>one install, one reboot</i></pre>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; <b>Check Now</b>. Download the 12.1 base image, then the 12.1 target. <b>Install</b> the target only.</li><li>If 12.1 is not listed after Check Now, the box is not skip-eligible &mdash; go via 11.2.</li></ul></div>
+<h3>4 &middot; Pre-checks that are easy to miss</h3>
+<div class="tbl"><table><thead><tr><th>Check</th><th>Why</th></tr></thead><tbody>
+<tr><td>Panorama first</td><td>Panorama, its Log Collectors and WildFire appliances must be on the same or later release than the firewalls. Upgrade them first.</td></tr>
+<tr><td>Certificates</td><td>Since 11.1, OpenSSL Security Level 2: RSA &ge; 2048 or ECDSA &ge; 256, SHA256 or better. Weak certs break after upgrade &mdash; fix them before.</td></tr>
+<tr><td>Strata Logging Service</td><td>Install the device certificate on each HA peer before upgrading; the firewall switches to it for logging-service authentication.</td></tr>
+<tr><td>Release notes for every skipped release</td><td>Skipping the install does not skip the behaviour changes. Read Upgrade/Downgrade Considerations for 11.2 <i>and</i> 12.1.</td></tr>
+<tr><td>Upgrade check report</td><td>PAN-OS can generate an upgrade check report (standalone or from Panorama for managed devices). Run it and clear the warnings before the window.</td></tr>
+<tr><td>Plugins</td><td>SD-WAN, DLP and other Panorama plugins have their own compatible-version tables. Check before Panorama goes to 12.1.</td></tr>
+</tbody></table></div>
+</section>
+
+
+    <section class="topic" id="change-window" data-group="Orientation" data-tag="PRE-CHANGE">
+  <div class="topic-head"><span class="eyebrow">Orientation</span><span class="tag">PRE-CHANGE</span>
+    <h2>Pre-Change Checklist</h2></div>
+<div class="kid"><p>Pack your bag the night before school. Everything on this list is packing &mdash; do it before the window, not during it.</p></div>
+<p>Work top to bottom. Anything unchecked here becomes a problem at 2am.</p>
+<div class="tbl"><table><thead><tr><th>Item</th><th>Why it matters</th></tr></thead><tbody>
+<tr><td>Change window approved</td><td>Reboots are non-negotiable. Standalone means outage; HA means failover risk.</td></tr>
+<tr><td>Out-of-band access</td><td>Console or a jump host on a different path. If the management interface does not come back, SSH will not save you.</td></tr>
+<tr><td>Config and device state exported off-box</td><td>The on-box snapshot is useless if the box itself is the problem. Device state also carries what Panorama pushed.</td></tr>
+<tr><td>Tech-support file generated</td><td>TAC will ask for a pre-upgrade one. Generating it afterwards loses the before picture.</td></tr>
+<tr><td>Content up to date</td><td>Release notes state a minimum content version. Upgrading with stale content is a supported way to break App-ID.</td></tr>
+<tr><td>HA fully in sync</td><td>Upgrading an out-of-sync pair propagates the mismatch into the new version.</td></tr>
+<tr><td>Disk space checked on both peers</td><td>A full partition stops the download or the install. <code>show system disk-space</code> &mdash; and mind the 90% rule on /opt/pancfg.</td></tr>
+<tr><td>Remote access pre-staged</td><td>Console or permitted-IP entry sorted in advance. You cannot fix a lockout remotely.</td></tr>
+<tr><td>Rollback version identified</td><td>Know the exact string you would type at 3am, before you need it.</td></tr>
+<tr><td>Power confirmed stable</td><td>Losing power mid-install can leave the appliance unusable.</td></tr>
+</tbody></table></div>
+</section>
+
+    <!-- ---------- GROUP: Remote Access ---------- -->
+
+    <section class="topic" id="remote-access-mgmt" data-group="Remote Access" data-tag="PRE-STAGE">
+  <div class="topic-head"><span class="eyebrow">Remote Access</span><span class="tag">PRE-STAGE</span>
+    <h2>Opening Remote Access Before the Window</h2></div>
+<div class="kid"><p>Make sure you have the key to the house <i>before</i> you lock the door behind you.</p></div>
+<p>An upgrade is the worst possible time to discover you cannot reach the firewall from where you actually are. Sort access out days ahead, from a session you already have, while the firewall is healthy.</p>
+<div class="warn"><p><b>Do this before you start, never during.</b> Every method below needs a commit, and a commit needs a working management session. If you are locked out already, you are going to the console or the data centre &mdash; there is no remote fix for a lockout.</p></div>
+<h3>Permitted IP addresses on the management interface</h3>
+<p>If the management interface has a permitted-IP list, only those sources can reach it. Adding your remote source is the single most common pre-upgrade access task.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode — the prompt changes from > to #</i>
+
+<i>See what is already allowed — Tab after permitted-ip lists the current entries:</i>
+admin@fw-01(active)# <b>show deviceconfig system permitted-ip</b>                    <i>which source addresses may reach the management interface</i>
+
+<i>Add your remote source. Always a /32 for a single host:</i>
+admin@fw-01(active)# <b>set deviceconfig system permitted-ip 203.0.113.45/32 description "upgrade-window jump host"</b>  <i>allow one host to reach management — everything unlisted is then blocked</i>
+admin@fw-01(active)# <b>commit</b>                                                   <i>apply the candidate config — nothing above is live until this runs</i>
+admin@fw-01(active)# <b>exit</b>                                                     <i>leave configuration mode, back to the > prompt</i></pre>
+<p><b>GUI:</b> Device &rarr; Setup &rarr; Management &rarr; edit <b>Management Interface Settings</b> &rarr; add the address under Permitted IP Addresses &rarr; OK &rarr; Commit.</p>
+<div class="warn"><p><b>The permitted-IP list is all-or-nothing.</b> An empty list means any source may reach the management interface. The moment you add your first entry, everything not listed is blocked &mdash; <mark>including the session you are typing in right now</mark>. Add your current source address in the same commit, or you will cut yourself off the instant it applies.</p></div>
+<h3>If Panorama pushes the list via a template</h3>
+<p>A template-pushed <code>permitted-ip</code> cannot be edited locally until you override it:</p>
+<pre class="cli">admin@fw-01(active)# <b>set deviceconfig system permitted-ip 203.0.113.45/32</b>  <i>allow that source address to reach the management interface</i>
+<u>Server error : set failed, may need to override template object permitted-ip first</u>
+
+admin@fw-01(active)# <b>override deviceconfig system permitted-ip</b>             <i>break the Panorama template lock so you can edit this locally</i>
+admin@fw-01(active)# <b>set deviceconfig system permitted-ip 203.0.113.45/32</b>  <i>allow that source address to reach the management interface</i>
+admin@fw-01(active)# <b>commit</b>                                                <i>apply the candidate config — nothing above is live until this runs</i></pre>
+<div class="note"><p>Cleaner alternative: add the entry to the Panorama template and push it to both peers at once. The local override works, but it drifts the firewall from its template and someone will "fix" that later by re-pushing &mdash; removing your access.</p></div>
+</section>
+
+    <section class="topic" id="remote-access-dataplane" data-group="Remote Access" data-tag="ACCESS PATHS">
+  <div class="topic-head"><span class="eyebrow">Remote Access</span><span class="tag">ACCESS PATHS</span>
+    <h2>Access Paths, Best to Worst</h2></div>
+<p>There is more than one way to reach a firewall remotely, and they are not equally good ideas. In order of preference:</p>
+<div class="tbl"><table><thead><tr><th>Method</th><th>Verdict</th></tr></thead><tbody>
+<tr><td>Out-of-band console (terminal server / iLO)</td><td><b>Best.</b> Survives a failed boot, a bad commit and a wrong permitted-IP entry. The only path that works when the firewall does not.</td></tr>
+<tr><td>VPN to the management network, then SSH</td><td><b>Very good.</b> No firewall management exposed publicly. Nothing to undo afterwards.</td></tr>
+<tr><td>Jump host on the management network</td><td><b>Good.</b> One permitted-IP entry, permanent, auditable.</td></tr>
+<tr><td>GlobalProtect on the firewall itself</td><td><b>Careful.</b> Fine day to day, useless when the box is mid-reboot &mdash; the thing you need access to is the thing that is down.</td></tr>
+<tr><td>Interface management profile on a data interface</td><td><b>Last resort.</b> Works, but you are putting the management plane on a traffic-carrying interface.</td></tr>
+<tr><td>Management interface directly on a public IP</td><td><b>Do not.</b> See the warning below.</td></tr>
+</tbody></table></div>
+<h3>Interface management profile on a data-plane interface</h3>
+<p>When there is genuinely no other path, you can enable SSH and HTTPS on a data interface's IP. Three things must all be right: the profile, the interface it is attached to, and a security policy permitting the traffic.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode — the prompt changes from > to #</i>
+
+<i>1. Build a tightly scoped profile:</i>
+admin@fw-01(active)# <b>set network profiles interface-management-profile MGMT-TEMP https yes</b>  <i>allow the web interface on whichever interface gets this profile</i>
+admin@fw-01(active)# <b>set network profiles interface-management-profile MGMT-TEMP ssh yes</b>  <i>allow SSH on whichever interface gets this profile</i>
+admin@fw-01(active)# <b>set network profiles interface-management-profile MGMT-TEMP ping yes</b>  <i>allow ping, so you can test reachability</i>
+admin@fw-01(active)# <b>set network profiles interface-management-profile MGMT-TEMP permitted-ip 203.0.113.45/32</b>  <i>restrict it to one source — this is the whole security control</i>
+
+<i>2. Attach it to the interface:</i>
+admin@fw-01(active)# <b>set network interface ethernet ethernet1/1 layer3 interface-management-profile MGMT-TEMP</b>  <i>attach the profile to a data interface so its IP answers SSH and HTTPS</i>
+admin@fw-01(active)# <b>commit</b>                                                   <i>apply the candidate config — nothing above is live until this runs</i>
+admin@fw-01(active)# <b>exit</b>                                                     <i>leave configuration mode, back to the > prompt</i>
+
+<i>3. Verify it took:</i>
+admin@fw-01(active)&gt; <b>show interface ethernet1/1</b>                               <i>detail for one interface, including any management profile applied</i></pre>
+<p><b>GUI:</b> Network &rarr; Network Profiles &rarr; Interface Mgmt &rarr; Add. Then Network &rarr; Interfaces &rarr; the interface &rarr; Advanced &rarr; Management Profile.</p>
+<div class="warn"><p><b>Never expose the management plane to the internet without a source restriction.</b> The <code>permitted-ip</code> inside the interface management profile is not optional decoration &mdash; it is the whole control. Palo Alto management interfaces have been actively scanned and exploited in the wild; an unrestricted HTTPS management surface on a public address will be found in hours, not weeks.</p></div>
+<div class="note"><p>Name the profile something obviously temporary &mdash; <code>MGMT-TEMP</code>, not <code>MGMT</code>. Add its removal to the change closure checklist alongside re-enabling preemption. Temporary access that nobody removes is how a maintenance convenience becomes next year's audit finding.</p></div>
+<h3>Removing it afterwards</h3>
+<pre class="cli">admin@fw-01(active)# <b>delete network interface ethernet ethernet1/1 layer3 interface-management-profile</b>  <i>detach the profile — do this as soon as the change closes</i>
+admin@fw-01(active)# <b>delete network profiles interface-management-profile MGMT-TEMP</b>  <i>remove the temporary profile entirely</i>
+admin@fw-01(active)# <b>commit</b>                                                   <i>apply the candidate config — nothing above is live until this runs</i></pre>
+</section>
+
+    <!-- ---------- GROUP: Capture State ---------- -->
+
+    <section class="topic" id="ssh-access" data-group="Capture State" data-tag="ACCESS">
+  <div class="topic-head"><span class="eyebrow">Capture State</span><span class="tag">ACCESS</span>
+    <h2>Connect and Confirm Which Box You Are On</h2></div>
+<div class="kid"><p>Put a name sticker on each window. You do not want to switch off the wrong firewall.</p></div>
+<p>Open a session to each peer in its own terminal tab and label them. The PAN-OS prompt tells you the HA role, which is the single most useful thing on the screen during an upgrade.</p>
+<pre class="cli">$ <b>ssh admin@10.10.10.11</b>     <i>peer 1</i>
+$ <b>ssh admin@10.10.10.12</b>     <i>peer 2</i>
+
+<u>admin@fw-01(active)&gt;</u>       <i>&lt;- role is in the prompt</i>
+<u>admin@fw-02(passive)&gt;</u>
+<u>admin@fw-02(suspended)&gt;</u>     <i>&lt;- after you suspend it</i></pre>
+<div class="note"><p>The prompt updates live. If you are sitting on a passive peer and it becomes active mid-upgrade, press Enter and the prompt will redraw with the new role. This is the fastest failover confirmation you have.</p></div>
+</section>
+
+    <section class="topic" id="version-capture" data-group="Capture State" data-tag="BASELINE">
+  <div class="topic-head"><span class="eyebrow">Capture State</span><span class="tag">BASELINE</span>
+    <h2>Baseline Capture — Run on Both Peers</h2></div>
+<div class="kid"><p>Take a photo of your room before you tidy it. Then you can tell exactly what moved.</p></div>
+<p>Capture this into your change record before you touch anything. It is what you compare against afterwards, and what you hand TAC if it goes wrong.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show system info</b>                     <i>everything about the box — model, serial, versions, uptime, mgmt IP</i>
+
+admin@fw-01(active)&gt; <b>show system info | match sw-version</b>  <i>just the running PAN-OS version</i>
+admin@fw-01(active)&gt; <b>show high-availability state</b>         <i>the main HA summary — roles, sync status, link health</i>
+admin@fw-01(active)&gt; <b>show session info</b>            <i>session count and table utilisation</i>
+admin@fw-01(active)&gt; <b>show system resources</b>        <i>CPU and memory before the change</i>
+admin@fw-01(active)&gt; <b>show interface all</b>            <i>which links are up right now</i></pre>
+<div class="human"><p>You are taking a photograph of a healthy firewall. If something looks odd afterwards, the only way to know whether the upgrade caused it is to have the photograph.</p></div>
+<div class="gui"><ul><li>Version and content: Dashboard &rarr; <b>General Information</b> widget.</li><li>HA roles and sync: Dashboard &rarr; <b>High Availability</b> widget.</li><li>Sessions and resources: Dashboard &rarr; <b>System Resources</b> widget; interfaces under Network &rarr; Interfaces (link state column).</li></ul></div>
+</section>
+
+    <section class="topic" id="ha-state" data-group="Capture State" data-tag="HA HEALTH">
+  <div class="topic-head"><span class="eyebrow">Capture State</span><span class="tag">HA HEALTH</span>
+    <h2>HA Health — The Gate You Must Pass</h2></div>
+<div class="kid"><p>Before you swap goalkeepers, make sure both are awake and wearing gloves.</p></div>
+<p>Do not start an HA upgrade on a pair that is not healthy and in sync. Fix that first, in a separate change if necessary.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show high-availability state</b>                  <i>the main HA summary — roles, sync status, link health</i>
+admin@fw-01(active)&gt; <b>show high-availability all</b>                    <i>full HA detail — use this when something looks wrong</i>
+admin@fw-01(active)&gt; <b>show high-availability state-synchronization</b>  <i>session-sync statistics between the peers</i>
+admin@fw-01(active)&gt; <b>show high-availability path-monitoring</b>        <i>which monitored paths are up or down</i>
+admin@fw-01(active)&gt; <b>show high-availability link-monitoring</b>        <i>which monitored links are up or down</i></pre>
+<p>Filter to the lines that decide whether you proceed:</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show high-availability state | match "Mode|State|Configuration|Preempt"</b>  <i>the four lines that decide whether you proceed</i>
+<u>Mode: Active-Passive</u>
+<u>Local Information: State: active</u>
+<u>Peer Information: State: passive</u>
+<u>Configuration Synchronization: Enabled</u>
+<u>Running Configuration: synchronized</u>
+<u>Preemptive: yes</u>              <i>&lt;- note this now; you will restore it later</i></pre>
+<div class="warn"><p><b>Write down the current preemption setting.</b> You are about to disable it. If you do not know whether it was on to begin with, you will either leave it off permanently or turn it on somewhere it was deliberately disabled.</p></div>
+<div class="tbl"><table><thead><tr><th>What you want to see</th><th>What it means if you do not</th></tr></thead><tbody>
+<tr><td>Running Configuration: synchronized</td><td>Peers disagree. Force a sync and resolve before upgrading.</td></tr>
+<tr><td>Peer State: passive (or active-secondary)</td><td>Peer is suspended, non-functional or absent. Stop.</td></tr>
+<tr><td>HA1 link status: up</td><td>Control link down means split-brain risk during the upgrade.</td></tr>
+<tr><td>HA2 link status: up</td><td>Session sync is not happening; failover will drop sessions.</td></tr>
+<tr><td>App/Threat versions match on both</td><td>Content mismatch. Install the same content on both peers first.</td></tr>
+</tbody></table></div>
+<div class="gui"><ul><li>Dashboard &rarr; <b>High Availability</b> widget &mdash; local/peer state, Running Config, HA1/HA2 status, App and Threat versions side by side.</li><li>Device &rarr; High Availability &rarr; <b>General</b> &rarr; Election Settings shows <b>Preemptive</b>. Note it now.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: Backup ---------- -->
+
+    <section class="topic" id="config-backup" data-group="Backup" data-tag="BACKUP">
+  <div class="topic-head"><span class="eyebrow">Backup</span><span class="tag">BACKUP</span>
+    <h2>Three Backups — Snapshot, Config Export, Device State</h2></div>
+<div class="kid"><p>Save your homework on the computer <i>and</i> on a USB stick. If the computer breaks, the stick still has it.</p></div>
+<p>These are different things and people routinely conflate them. Do all three, on <b>both</b> peers.</p>
+<h3>On-box named snapshot</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode — the prompt changes from > to #</i>
+admin@fw-01(active)# <b>save config to Pre_Upgrade_2026-08-24.xml</b>                <i>snapshot the config to the firewall's OWN disk — convenient, not a real backup</i>
+admin@fw-01(active)# <b>exit</b>                                                     <i>leave configuration mode, back to the > prompt</i>
+
+<i>Confirm it landed:</i>
+admin@fw-01(active)&gt; <b>show config saved Pre_Upgrade_2026-08-24.xml | match hostname</b>  <i>prove the snapshot exists and is readable</i></pre>
+<h3>Off-box export</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>scp export configuration from running-config.xml to user@10.20.30.40:/backups/fw-01-pre.xml</b>  <i>copy the live config to a remote server — THIS is the real backup</i>
+<i>or, if you use TFTP:</i>
+admin@fw-01(active)&gt; <b>tftp export configuration from running-config.xml to 10.20.30.40</b>  <i>same thing over TFTP if you have no SCP target</i></pre>
+<h3>Device state export &mdash; the fullest restore bundle</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode</i>
+admin@fw-01(active)# <b>save device-state</b>                                        <i>build device_state_cfg.tgz in /opt/pancfg/mgmt/device-state — Tab-complete to confirm on your release</i>
+admin@fw-01(active)# <b>exit</b>
+admin@fw-01(active)&gt; <b>scp export device-state to user@10.20.30.40:/backups/</b>        <i>copy the bundle off the box</i>
+<i>or:</i>
+admin@fw-01(active)&gt; <b>tftp export device-state to 10.20.30.40</b></pre>
+<div class="tbl"><table><thead><tr><th>Backup</th><th>Contains</th><th>Use it to</th></tr></thead><tbody>
+<tr><td>Named snapshot (on-box)</td><td>Local running config</td><td>Quick revert on a healthy box</td></tr>
+<tr><td>Config export (off-box)</td><td>Local running config only &mdash; <b>not</b> what Panorama pushed</td><td>Rebuild or roll back a standalone / locally managed firewall</td></tr>
+<tr><td>Device state (off-box)</td><td>Running config <b>plus</b> Panorama-pushed device-group and template settings. On a GlobalProtect portal, also its certificates and satellite list.</td><td>Replace a dead firewall with a new one &mdash; import the bundle on the replacement</td></tr>
+</tbody></table></div>
+<div class="warn"><p>Device state is not "everything". It does <b>not</b> hold licences (re-fetch them from the support portal on a replacement), logs, software images or dynamic content. Encrypted secrets in the config are tied to the master key &mdash; if you use a custom master key, record it (securely) or the restored secrets will not decrypt.</p></div>
+<div class="warn"><p>The named snapshot lives on the firewall's own disk. If the appliance fails to boot, that copy is unreachable. The off-box export is the one that actually protects you — treat the snapshot as a convenience, not a backup.</p></div>
+<div class="gui"><ul><li>Device &rarr; Setup &rarr; Operations &rarr; <b>Save named configuration snapshot</b> (on-box), then <b>Export named configuration snapshot</b> &rarr; running-config.xml (off-box, via browser), then <b>Export device state</b> (full bundle, via browser). Full walkthrough: <a href="#gui-backup">Backing Up Without an SCP Server</a>.</li></ul></div>
+</section>
+
+    <section class="topic" id="tech-support" data-group="Backup" data-tag="EVIDENCE">
+  <div class="topic-head"><span class="eyebrow">Backup</span><span class="tag">EVIDENCE</span>
+    <h2>Pre-Upgrade Tech-Support File</h2></div>
+<div class="kid"><p>A doctor wants to know how you felt <i>before</i> you got sick, not just after.</p></div>
+<p>Generate on both peers. It is a background job, so start it early and collect it while downloads run.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>request tech-support dump</b>                              <i>generate the diagnostic bundle TAC will ask for — do it BEFORE the change</i>
+<u>Exec job enqueued with jobid 599</u>
+
+admin@fw-01(active)&gt; <b>show jobs id 599</b>                                       <i>poll that job until it reports FIN / OK</i>
+<i>wait for Status FIN / Result OK, then pull the file off the box</i>
+
+admin@fw-01(active)&gt; <b>scp export tech-support to user@10.20.30.40:/backups/</b>  <i>pull the tech-support file off the box</i></pre>
+<div class="note"><p>If you open a TAC case after a failed upgrade, the first request will be for a tech-support file from <b>before</b> the change. Generating one afterwards captures the broken state only, which halves its value.</p></div>
+<div class="gui"><ul><li>Device &rarr; Support &rarr; <b>Generate Tech Support File</b> &rarr; Yes &rarr; <b>Download</b> when it finishes.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: Software and Content ---------- -->
+
+    <section class="topic" id="software-list" data-group="Software and Content" data-tag="IMAGES">
+  <div class="topic-head"><span class="eyebrow">Software and Content</span><span class="tag">IMAGES</span>
+    <h2>Listing Images — <code>check</code> vs <code>info</code></h2></div>
+<div class="kid"><p>Check the menu before you order &mdash; you can only order what is on it.</p></div>
+<p>Two commands, routinely mixed up, and the distinction matters when you are troubleshooting a download that will not appear.</p>
+<div class="tbl"><table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody>
+<tr><td>request system software check</td><td>Refreshes the list of available versions and shows what is loaded on the firewall.</td></tr>
+<tr><td>request system software info</td><td>Shows the software versions available for download, with size and whether each is already downloaded.</td></tr>
+<tr><td>request system software info preferred</td><td>(11.1.3 and later) Preferred releases only.</td></tr>
+<tr><td>request system software info base</td><td>(11.1.3 and later) Base releases only.</td></tr>
+</tbody></table></div>
+<pre class="cli">admin@fw-02(passive)&gt; <b>request system software info</b>  <i>list versions available to download, with a Downloaded flag</i>
+<u>Version    Size   Released on           Downloaded</u>
+<u>12.1.x-hN  1.3GB  (release date)         no</u>
+<u>12.1.0     1.3GB  (release date)         yes</u>
+<i>Downloaded=yes is what you are waiting for before you can install</i></pre>
+<div class="warn"><p>Only versions for the next available release are shown &mdash; unless the box is skip-eligible (see <a href="#go-12">Going to 12.1</a>). If your target does not appear in the list, you are more than one feature release away from it — go back to <a href="#upgrade-path">The Upgrade Path</a>.</p></div>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; <b>Check Now</b>. The Downloaded column and Currently Installed tick are the GUI twins of <code>info</code>.</li></ul></div>
+</section>
+
+    <section class="topic" id="software-download" data-group="Software and Content" data-tag="DOWNLOAD">
+  <div class="topic-head"><span class="eyebrow">Software and Content</span><span class="tag">DOWNLOAD</span>
+    <h2>Downloading the Image</h2></div>
+<div class="kid"><p>Bring the new toy into the house early. It is not played with yet &mdash; it just sits in the box.</p></div>
+<p>Download is non-disruptive. Do it well before the window — on a 3400-class box a 1.2GB image typically takes 15–20 minutes over a management link that is not congested.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>request system software download version &lt;target&gt;</b>  <i>pull the image onto the firewall — non-disruptive, do it early</i>
+<u>Download job enqueued with jobid 595</u>
+
+admin@fw-01(active)&gt; <b>show jobs id 595</b>                                   <i>poll that job until it reports FIN / OK</i>
+<i>poll until Status FIN and Result OK</i></pre>
+<h3>Downloading to both peers in one command</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>request system software download sync-to-peer yes version &lt;target&gt;</b>  <i>download once and push the image across to the HA peer</i>
+<i>pulls the image once, then pushes it across HA1 to the peer</i></pre>
+<div class="note"><p><code>sync-to-peer yes</code> saves a second internet pull and is useful when only one peer has a route to the update servers. Verify it actually arrived — run <code>request system software info</code> on the peer and confirm <b>Downloaded: yes</b> rather than assuming.</p></div>
+<h3>If the base image is missing</h3>
+<pre class="cli"><i>Landing on a hotfix requires the base image present on disk first:</i>
+admin@fw-01(active)&gt; <b>request system software download version 11.1.0</b>     <i>base — download only</i>
+admin@fw-01(active)&gt; <b>request system software download version 11.1.4-h13</b> <i>target</i>
+<i>You install only the target. The base image never gets installed.</i></pre>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; <b>Download</b> on the base image (if hotfix) and the target. Watch progress in <b>Tasks</b>, bottom-right.</li><li>Repeat on the peer, or confirm it arrived there before the window.</li></ul></div>
+</section>
+
+    <section class="topic" id="dynamic-updates" data-group="Software and Content" data-tag="CONTENT">
+  <div class="topic-head"><span class="eyebrow">Software and Content</span><span class="tag">CONTENT</span>
+    <h2>Dynamic Updates — Content Before Software</h2></div>
+<div class="kid"><p>Update the sticker book before you get the new album &mdash; the new album expects the new stickers.</p></div>
+<p>Content goes on first, and it goes on <b>both peers</b>. Content installs do not require a reboot and are not synchronised by HA.</p>
+<h3>Download</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>request content upgrade download latest</b>     <i>fetch the newest Applications and Threats content</i>
+<u>Download job enqueued with jobid 597</u>
+admin@fw-01(active)&gt; <b>request anti-virus upgrade download latest</b>  <i>fetch the newest antivirus signatures</i>
+<u>Download job enqueued with jobid 596</u>
+admin@fw-01(active)&gt; <b>request wildfire upgrade download latest</b>    <i>fetch WildFire signatures — errors harmlessly without the licence</i>
+<u>Server error : There is not wildfire license on the box</u>   <i>expected without a WildFire subscription — not a failure</i></pre>
+<h3>Install</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>request content upgrade install version latest</b>     <i>activate the App and Threat content — no reboot needed</i>
+<u>Content install job enqueued with jobid 601</u>
+admin@fw-01(active)&gt; <b>request anti-virus upgrade install version latest</b>  <i>activate the antivirus signatures — no reboot needed</i>
+<u>Content install job enqueued with jobid 600</u></pre>
+<h3>Verify</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>request content upgrade check</b>                            <i>ask Palo Alto's servers what content is available</i>
+admin@fw-01(active)&gt; <b>request anti-virus upgrade check</b>                         <i>ask Palo Alto's servers what antivirus content is available</i>
+admin@fw-01(active)&gt; <b>show system info | match "app-version|threat-version|av-version"</b>  <i>confirm content installed — check the date is today or yesterday</i>
+<i>confirm today's or yesterday's date on both peers, and that the two peers match</i></pre>
+<div class="tbl"><table><thead><tr><th>Command form</th><th>Note</th></tr></thead><tbody>
+<tr><td>request content upgrade check</td><td>Queries Palo Alto's servers for available content versions.</td></tr>
+<tr><td>request content upgrade info</td><td>Lists content versions already on the firewall.</td></tr>
+<tr><td>request content upgrade download latest</td><td><code>latest</code> is accepted; an explicit version string also works.</td></tr>
+<tr><td>request content upgrade install version latest</td><td>Documented form takes an explicit content version; <code>latest</code> is the convenient shorthand.</td></tr>
+</tbody></table></div>
+<div class="warn"><p>The WildFire error above is cosmetic on a box without the subscription, but do not train yourself to ignore errors during an upgrade. Read every one; decide it is harmless rather than assuming.</p></div>
+<div class="gui"><ul><li>Device &rarr; Dynamic Updates &rarr; <b>Check Now</b> &rarr; Download &rarr; <b>Install</b> for Applications and Threats, then Antivirus (and WildFire if licensed). Repeat on the peer.</li></ul></div>
+</section>
+
+    <section class="topic" id="job-monitoring" data-group="Software and Content" data-tag="JOBS">
+  <div class="topic-head"><span class="eyebrow">Software and Content</span><span class="tag">JOBS</span>
+    <h2>Watching Jobs — Nothing Is Instant</h2></div>
+<div class="kid"><p>Putting cookies in the oven does not mean they are baked. Watch the timer.</p></div>
+<p>Almost every <code>request</code> command returns a job ID and exits immediately. The command succeeding tells you the job was <i>queued</i>, not that it worked.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show jobs id 595</b>     <i>poll that job until it reports FIN / OK</i>
+<u>Enqueued          ID  Type      Status  Result  Completed</u>
+<u>2026/08/24 21:04  595 Downld    FIN     OK      21:19:52</u>
+
+admin@fw-01(active)&gt; <b>show jobs all</b>        <i>every job the box knows about</i>
+admin@fw-01(active)&gt; <b>show jobs processed</b>  <i>jobs that have finished</i>
+admin@fw-01(active)&gt; <b>show jobs pending</b>    <i>jobs still queued or running</i></pre>
+<div class="tbl"><table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>ACT / PEND</td><td>Still running or queued. Keep waiting.</td></tr>
+<tr><td>FIN + OK</td><td>Done and successful. Proceed.</td></tr>
+<tr><td>FIN + FAIL</td><td>Done and failed. Read the details column before retrying.</td></tr>
+</tbody></table></div>
+<div class="note"><p>The command is <code>show jobs id &lt;jobid&gt;</code> — plural <b>jobs</b>. Many runbooks in circulation write <code>show job id</code>, which is not valid syntax.</p></div>
+<div class="gui"><ul><li><b>Tasks</b> link, bottom-right of every page = <code>show jobs all</code>. Click a task for its details.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: HA Links ---------- -->
+
+    <section class="topic" id="ha-links-count" data-group="HA Links" data-tag="HOW MANY">
+  <div class="topic-head"><span class="eyebrow">HA Links</span><span class="tag">HOW MANY</span>
+    <h2>HA Links &mdash; How Many, and What Each One Does</h2></div>
+<div class="kid"><p>Two firewalls are like two friends guarding one door. They need a <b>walkie-talkie</b> to say "I'm OK" every second (HA1). They need a <b>notebook they share</b> so both know who already came in (HA2). If both friends open the door at the same time, they also need a <b>little window between them</b> to hand people across (HA3).</p></div>
+<div class="tbl"><table><thead><tr><th>Mode</th><th>Required</th><th>Optional backups</th><th>Total you normally cable</th></tr></thead><tbody>
+<tr><td>Active/Passive</td><td>2 &mdash; HA1, HA2</td><td>HA1-backup, HA2-backup</td><td>2 minimum, 4 recommended</td></tr>
+<tr><td>Active/Active</td><td>3 &mdash; HA1, HA2, HA3</td><td>HA1-backup, HA2-backup (no HA3-backup exists)</td><td>3 minimum, 5 recommended</td></tr>
+</tbody></table></div>
+<div class="tbl"><table><thead><tr><th>Link</th><th>Job</th><th>Under the hood</th></tr></thead><tbody>
+<tr><td>HA1 &middot; control</td><td>Hellos, heartbeats, HA state, config sync, and management-plane sync of routing and User-ID.</td><td>Layer 3, needs an IP. TCP 28769/28260 clear text, TCP 28 when encrypted. Heartbeats are ICMP.</td></tr>
+<tr><td>HA1-backup</td><td>Takes over if HA1 dies, so the peers do not both think they are alone.</td><td>Separate physical port, different subnet from HA1. TCP 28770/28260.</td></tr>
+<tr><td>Heartbeat backup</td><td>Extra heartbeat over the MGT port.</td><td>Port 28771. Recommended when HA1 or HA1-backup uses an in-band port.</td></tr>
+<tr><td>HA2 &middot; data</td><td>Copies sessions, forwarding tables, IPsec SAs and ARP tables to the peer.</td><td>Layer 2, EtherType 0x7261 by default; IP (protocol 99) or UDP 29281 if it must cross subnets. One-way from active to passive, except HA2 keep-alive.</td></tr>
+<tr><td>HA2-backup</td><td>Keeps session sync alive if HA2 fails.</td><td>Separate physical port, different subnet from HA2.</td></tr>
+<tr><td>HA3 &middot; forwarding</td><td>Active/active only. Hands packets to the peer that owns the session &mdash; during session setup and for asymmetric flows.</td><td>Layer 2, MAC-in-MAC, no IP, no encryption. No backup link: use a LAG for redundancy. Needs jumbo frames on anything in the path. If HA3 fails, the active-secondary goes non-functional.</td></tr>
+</tbody></table></div>
+<div class="note"><p>HA1 is the one that matters most during an upgrade. Lose HA1 <i>and</i> HA1-backup and each peer thinks the other is dead &mdash; that is split brain. This is why the runbook's HA health gate checks <code>HA1 link status: up</code> before anything else.</p></div>
+<div class="note"><p>HA4 is not part of this picture. It belongs to NGFW clusters, not to a classic two-firewall HA pair.</p></div>
+</section>
+
+    <section class="topic" id="ha-links-ap" data-group="HA Links" data-tag="ACTIVE/PASSIVE">
+  <div class="topic-head"><span class="eyebrow">HA Links</span><span class="tag">ACTIVE/PASSIVE</span>
+    <h2>Active/Passive &mdash; One Works, One Watches</h2></div>
+<div class="kid"><p>Two lifeguards. One sits in the tall chair and watches every swimmer. The other sits on the bench. Every second they wave at each other (HA1). The one in the chair keeps passing notes about every swimmer to the bench (HA2). When the chair lifeguard has to leave &mdash; say, to get new glasses (the upgrade) &mdash; the bench lifeguard climbs up and already knows every swimmer. Nobody drowns.</p></div>
+<figure><svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+<!-- top / bottom -->
+<rect x="280" y="12" width="200" height="36" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.4"/>
+<text x="380" y="35" fill="#e4edf4" font-size="10.5" font-weight="bold" text-anchor="middle">INTERNET · USERS</text>
+<rect x="280" y="348" width="200" height="36" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.4"/>
+<text x="380" y="371" fill="#e4edf4" font-size="10.5" font-weight="bold" text-anchor="middle">LAN · SERVERS</text>
+<!-- wiring -->
+<path d="M380,48 V84 H170 V128 M380,84 H590 V128 M170,236 V312 H380 V348 M590,236 V312 H380" fill="none" stroke="#1f3b52" stroke-width="1.6"/>
+<!-- FW-01 -->
+<rect x="60" y="128" width="220" height="108" rx="8" fill="#101f2f" stroke="#5bd68a" stroke-width="1.8">
+  <animate attributeName="stroke" values="#5bd68a;#ff6b6b" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+</rect>
+<text x="170" y="160" fill="#e4edf4" font-size="12" font-weight="bold" text-anchor="middle">FW-01</text>
+<text x="170" y="182" fill="#5bd68a" font-size="10.5" font-weight="bold" text-anchor="middle" opacity="1">ACTIVE<animate attributeName="opacity" values="1;0" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/></text>
+<text x="170" y="182" fill="#ff6b6b" font-size="10.5" font-weight="bold" text-anchor="middle" opacity="0">SUSPENDED · UPGRADING<animate attributeName="opacity" values="0;1" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/></text>
+<!-- FW-02 -->
+<rect x="480" y="128" width="220" height="108" rx="8" fill="#101f2f" stroke="#2ec4b6" stroke-width="1.8">
+  <animate attributeName="stroke" values="#2ec4b6;#5bd68a" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+</rect>
+<text x="590" y="160" fill="#e4edf4" font-size="12" font-weight="bold" text-anchor="middle">FW-02</text>
+<text x="590" y="182" fill="#2ec4b6" font-size="10.5" font-weight="bold" text-anchor="middle" opacity="1">PASSIVE · WATCHING<animate attributeName="opacity" values="1;0" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/></text>
+<text x="590" y="182" fill="#5bd68a" font-size="10.5" font-weight="bold" text-anchor="middle" opacity="0">ACTIVE · TOOK OVER<animate attributeName="opacity" values="0;1" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/></text>
+<!-- HA links -->
+<line x1="280" y1="150" x2="480" y2="150" stroke="#ffb703" stroke-width="2"/>
+<text x="380" y="145" fill="#ffb703" font-size="8.5" text-anchor="middle">HA1 · control · heartbeats + config</text>
+<line x1="280" y1="170" x2="480" y2="170" stroke="#ffb703" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.6"/>
+<text x="380" y="166" fill="#8ba3b8" font-size="7.5" text-anchor="middle">HA1-backup (optional)</text>
+<line x1="280" y1="200" x2="480" y2="200" stroke="#2ec4b6" stroke-width="2"/>
+<text x="380" y="195" fill="#2ec4b6" font-size="8.5" text-anchor="middle">HA2 · data · session table →</text>
+<line x1="280" y1="220" x2="480" y2="220" stroke="#2ec4b6" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.6"/>
+<text x="380" y="216" fill="#8ba3b8" font-size="7.5" text-anchor="middle">HA2-backup (optional)</text>
+<!-- HA1 heartbeat: bounces both ways, always -->
+<circle r="4" fill="#ffb703"><animateMotion dur="2s" repeatCount="indefinite" path="M282,150 H478" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"/></circle>
+<!-- Phase 1: traffic through FW-01, HA2 sync FW-01 -> FW-02 -->
+<g opacity="1">
+  <animate attributeName="opacity" values="1;0" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  <circle r="5" fill="#5bd68a"><animateMotion dur="3s" repeatCount="indefinite" path="M380,48 V84 H170 V312 H380 V348"/></circle>
+  <circle r="5" fill="#5bd68a"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite" path="M380,48 V84 H170 V312 H380 V348"/></circle>
+  <circle r="3.5" fill="#2ec4b6"><animateMotion dur="1.4s" repeatCount="indefinite" path="M282,200 H478"/></circle>
+  <circle r="3.5" fill="#2ec4b6"><animateMotion dur="1.4s" begin="0.7s" repeatCount="indefinite" path="M282,200 H478"/></circle>
+</g>
+<!-- Phase 2: FW-01 suspended, traffic through FW-02 -->
+<g opacity="0">
+  <animate attributeName="opacity" values="0;1" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+  <circle r="5" fill="#5bd68a"><animateMotion dur="3s" repeatCount="indefinite" path="M380,48 V84 H590 V312 H380 V348"/></circle>
+  <circle r="5" fill="#5bd68a"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite" path="M380,48 V84 H590 V312 H380 V348"/></circle>
+  <text x="170" y="210" fill="#8ba3b8" font-size="8.5" text-anchor="middle">no traffic · safe to reboot</text>
+</g>
+<!-- phase caption -->
+<text x="380" y="300" fill="#8ba3b8" font-size="9" text-anchor="middle" opacity="1">phase 1 · normal day<animate attributeName="opacity" values="1;0" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/></text>
+<text x="380" y="300" fill="#ff6b6b" font-size="9" text-anchor="middle" opacity="0">phase 2 · FW-01 suspended for upgrade<animate attributeName="opacity" values="0;1" keyTimes="0;0.5" calcMode="discrete" dur="12s" repeatCount="indefinite"/></text>
+</svg><figcaption>Active/passive. Green = user traffic · amber = HA1 heartbeat · teal = HA2 session sync (one-way, active → passive). Loops every 12 s: normal, then FW-01 suspended.</figcaption></figure>
+<div class="tbl"><table><thead><tr><th>Link</th><th>What it is doing in the picture</th></tr></thead><tbody>
+<tr><td>HA1</td><td>Ball bouncing both ways &mdash; "are you alive?" "yes, are you?" Config changes also ride here.</td></tr>
+<tr><td>HA2</td><td>Balls flowing one way only. The active copies its session table to the passive, so a failover does not drop live sessions.</td></tr>
+<tr><td>Backups (dashed)</td><td>Idle until the primary link fails. Optional, but strongly recommended.</td></tr>
+</tbody></table></div>
+</section>
+
+    <section class="topic" id="ha-links-aa" data-group="HA Links" data-tag="ACTIVE/ACTIVE">
+  <div class="topic-head"><span class="eyebrow">HA Links</span><span class="tag">ACTIVE/ACTIVE</span>
+    <h2>Active/Active &mdash; Both Work, and They Hand Packets Across</h2></div>
+<div class="kid"><p>Two shop cashiers, both open. A customer starts an order at till 1 but walks over to till 2 to pay. Till 2 does not start a new order &mdash; it slides the customer across the counter back to till 1, who owns that order. That slide across the counter is HA3. They still wave at each other (HA1) and still share the notebook (HA2).</p></div>
+<figure><svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+<rect x="280" y="12" width="200" height="36" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.4"/>
+<text x="380" y="35" fill="#e4edf4" font-size="10.5" font-weight="bold" text-anchor="middle">INTERNET · USERS</text>
+<rect x="280" y="348" width="200" height="36" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.4"/>
+<text x="380" y="371" fill="#e4edf4" font-size="10.5" font-weight="bold" text-anchor="middle">LAN · SERVERS</text>
+<path d="M380,48 V84 H170 V128 M380,84 H590 V128 M170,236 V312 H380 V348 M590,236 V312 H380" fill="none" stroke="#1f3b52" stroke-width="1.6"/>
+<rect x="60" y="128" width="220" height="108" rx="8" fill="#101f2f" stroke="#5bd68a" stroke-width="1.8"/>
+<text x="170" y="160" fill="#e4edf4" font-size="12" font-weight="bold" text-anchor="middle">FW-01</text>
+<text x="170" y="180" fill="#5bd68a" font-size="10.5" font-weight="bold" text-anchor="middle">ACTIVE-PRIMARY</text>
+<rect x="480" y="128" width="220" height="108" rx="8" fill="#101f2f" stroke="#5bd68a" stroke-width="1.8"/>
+<text x="590" y="160" fill="#e4edf4" font-size="12" font-weight="bold" text-anchor="middle">FW-02</text>
+<text x="590" y="180" fill="#5bd68a" font-size="10.5" font-weight="bold" text-anchor="middle">ACTIVE-SECONDARY</text>
+<!-- links -->
+<line x1="280" y1="146" x2="480" y2="146" stroke="#ffb703" stroke-width="2"/>
+<text x="380" y="141" fill="#ffb703" font-size="8.5" text-anchor="middle">HA1 · control</text>
+<line x1="280" y1="176" x2="480" y2="176" stroke="#2ec4b6" stroke-width="2"/>
+<text x="380" y="171" fill="#2ec4b6" font-size="8.5" text-anchor="middle">HA2 · session sync ⇄</text>
+<line x1="280" y1="210" x2="480" y2="210" stroke="#ff6b6b" stroke-width="2.4"/>
+<text x="380" y="205" fill="#ff6b6b" font-size="8.5" text-anchor="middle">HA3 · packet forwarding (A/A only)</text>
+<text x="380" y="228" fill="#8ba3b8" font-size="7.5" text-anchor="middle">HA1/HA2 backups optional · no HA3-backup — use a LAG</text>
+<!-- HA1 heartbeat -->
+<circle r="4" fill="#ffb703"><animateMotion dur="2s" repeatCount="indefinite" path="M282,146 H478" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"/></circle>
+<!-- HA2 both directions: each peer syncs the sessions it owns -->
+<circle r="3.5" fill="#2ec4b6"><animateMotion dur="1.6s" repeatCount="indefinite" path="M282,176 H478"/></circle>
+<circle r="3.5" fill="#2ec4b6"><animateMotion dur="1.6s" begin="0.8s" repeatCount="indefinite" path="M478,176 H282"/></circle>
+<!-- normal traffic through both -->
+<circle r="5" fill="#5bd68a"><animateMotion dur="3.2s" repeatCount="indefinite" path="M380,48 V84 H170 V312 H380 V348"/></circle>
+<circle r="5" fill="#5bd68a"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M380,48 V84 H590 V312 H380 V348"/></circle>
+<!-- asymmetric packet: arrives at FW-02, owned by FW-01, crosses HA3 -->
+<circle r="6" fill="#ffb703" stroke="#0b1622" stroke-width="1.5"><animateMotion dur="5s" repeatCount="indefinite" path="M380,48 V84 H590 V210 H170 V312 H380 V348"/></circle>
+<text x="590" y="258" fill="#ffb703" font-size="8.5" text-anchor="middle">amber = session owned by FW-01</text>
+<text x="590" y="272" fill="#ffb703" font-size="8.5" text-anchor="middle">arrives here, crosses HA3</text>
+</svg><figcaption>Active/active. Both peers carry traffic (green). HA2 now flows both ways. The amber packet lands on FW-02 but belongs to a session FW-01 owns, so it rides HA3 across.</figcaption></figure>
+<div class="warn"><p>During an active/active upgrade the survivor carries <b>everything</b> while its peer is suspended &mdash; including traffic that used to hairpin over HA3. Size for 100% on one box before the window, not during it.</p></div>
+</section>
+
+    <section class="topic" id="ha-links-verify" data-group="HA Links" data-tag="VERIFY">
+  <div class="topic-head"><span class="eyebrow">HA Links</span><span class="tag">VERIFY</span>
+    <h2>Checking the Links &mdash; CLI and GUI</h2></div>
+<p>Run on both peers before the window, and again after each peer comes back.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show high-availability state</b>          <i>roles plus HA1 / HA2 link status in one screen</i>
+admin@fw-01(active)&gt; <b>show high-availability all</b>            <i>full detail — find the HA1, HA1-backup, HA2 (and HA3 on A/A) blocks</i>
+<u>Link State: Up</u>                                             <i>what you want to see under every configured link</i>
+admin@fw-01(active)&gt; <b>show high-availability interface ha2</b>  <i>HA2 counters — are sessions actually syncing</i></pre>
+<div class="gui"><ul>
+<li><b>Health at a glance:</b> Dashboard &rarr; High Availability widget. HA1, HA2 (and HA3) lights green.</li>
+<li><b>Where HA1 / HA2 and their backups are configured:</b> Device &rarr; High Availability &rarr; the Control Link (HA1), Control Link (HA1 Backup), Data Link (HA2) and Data Link (HA2 Backup) panels.</li>
+<li><b>Where HA3 is configured (A/A only):</b> Device &rarr; High Availability &rarr; Active/Active Config &rarr; Packet Forwarding.</li>
+</ul></div>
+<div class="tbl"><table><thead><tr><th>Link down</th><th>What breaks</th><th>Upgrade decision</th></tr></thead><tbody>
+<tr><td>HA1 (no backup)</td><td>Split-brain risk &mdash; both peers may go active.</td><td>Stop. Fix before the window.</td></tr>
+<tr><td>HA2</td><td>Failover works but drops every live session.</td><td>Stop. The whole point of a hitless upgrade is gone.</td></tr>
+<tr><td>HA3 (A/A)</td><td>Active-secondary goes non-functional; asymmetric flows fail.</td><td>Stop. Fix the LAG / jumbo frames first.</td></tr>
+<tr><td>A backup link only</td><td>No redundancy for that link.</td><td>Proceed with care, record it in the change.</td></tr>
+</tbody></table></div>
+</section>
+
+    <!-- ---------- GROUP: HA Preparation ---------- -->
+
+    <section class="topic" id="disable-preemption" data-group="HA Preparation" data-tag="HA PREP">
+  <div class="topic-head"><span class="eyebrow">HA Preparation</span><span class="tag">HA PREP</span>
+    <h2>Disable Preemption</h2></div>
+<div class="kid"><p>Tell the bossy goalkeeper: "Do not grab the gloves back the second you walk in." Otherwise he grabs them while he is still tying his shoes.</p></div>
+<p>Preemption makes the higher-priority peer grab the active role back the moment it is capable of it. During an upgrade that means an unplanned failover at the exact moment a freshly rebooted, newly-versioned firewall comes up. Turn it off first.</p>
+<pre class="cli"><i>Read the current setting before changing it:</i>
+admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode — the prompt changes from > to #</i>
+admin@fw-01(active)# <b>show deviceconfig high-availability group election-option</b>  <i>read the current preemption setting before you change it</i>
+<u>preemptive yes;</u>
+
+admin@fw-01(active)# <b>set deviceconfig high-availability group election-option preemptive no</b>  <i>stop the higher-priority peer grabbing back the active role mid-upgrade</i>
+admin@fw-01(active)# <b>commit</b>                                                   <i>apply the candidate config — nothing above is live until this runs</i>
+admin@fw-01(active)# <b>exit</b>                                                     <i>leave configuration mode, back to the > prompt</i>
+
+<i>Verify from operational mode:</i>
+admin@fw-01(active)&gt; <b>show high-availability state | match Preempt</b>             <i>is preemption on or off right now</i>
+<u>Preemptive: no</u></pre>
+<div class="warn"><p>The path is <code>high-availability group election-option</code> — with <b>no group ID in it</b>. On PAN-OS 7.0 and later the HA group is a single node; <code>group-id</code> is a value you set beneath it, not a selector you index into. See <a href="#syntax-corrections">Syntax Corrections</a>.</p></div>
+<div class="note"><p>You only need to disable preemption on <b>one</b> peer, but the commit must succeed before you proceed. If you prefer belt-and-braces, doing it on both is harmless.</p></div>
+<div class="gui"><ul><li>Device &rarr; High Availability &rarr; General &rarr; edit <b>Election Settings</b> &rarr; clear <b>Preemptive</b> &rarr; OK &rarr; <b>Commit</b>. Confirm the commit succeeded before going on.</li></ul></div>
+</section>
+
+    <section class="topic" id="link-path-monitoring" data-group="HA Preparation" data-tag="HA PREP">
+  <div class="topic-head"><span class="eyebrow">HA Preparation</span><span class="tag">HA PREP</span>
+    <h2>Link and Path Monitoring — Optional, Situational</h2></div>
+<div class="kid"><p>Turn off the smoke alarm while you make toast on purpose &mdash; then turn it straight back on.</p></div>
+<p>Some environments also disable link and path monitoring for the window, so that interfaces bouncing during a reboot do not trigger a failover on the peer that is still passing traffic.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode — the prompt changes from > to #</i>
+admin@fw-01(active)# <b>set deviceconfig high-availability group monitoring link-monitoring enabled no</b>  <i>stop a bouncing interface triggering a failover during reboots</i>
+admin@fw-01(active)# <b>set deviceconfig high-availability group monitoring path-monitoring enabled no</b>  <i>stop failed ping probes triggering a failover during reboots</i>
+admin@fw-01(active)# <b>commit</b>                                                   <i>apply the candidate config — nothing above is live until this runs</i>
+
+<i>Verify:</i>
+admin@fw-01(active)# <b>show deviceconfig high-availability group monitoring</b>     <i>read the current link and path monitoring settings</i>
+admin@fw-01(active)# <b>exit</b>                                                     <i>leave configuration mode, back to the > prompt</i>
+admin@fw-01(active)&gt; <b>show high-availability path-monitoring</b>                   <i>which monitored paths are up or down</i>
+admin@fw-01(active)&gt; <b>show high-availability link-monitoring</b>                   <i>which monitored links are up or down</i></pre>
+<div class="human"><p>Preemption is about who wants to be in charge. Monitoring is about who is allowed to declare themselves unfit. During a reboot both opinions become unreliable, so you mute them for the duration.</p></div>
+<div class="warn"><p>This is a genuine trade-off, not a free win. With monitoring disabled you also lose automatic failover for a <b>real</b> link failure during the window. Palo Alto's documented procedure disables preemption only. Disable monitoring if your environment has a history of spurious failovers on reboot; otherwise leave it alone — and either way, <mark>re-enable it the moment you are done</mark>.</p></div>
+<div class="gui"><ul><li>Device &rarr; High Availability &rarr; <b>Link and Path Monitoring</b> &rarr; edit Link Monitoring and Path Monitoring &rarr; clear <b>Enabled</b> &rarr; OK &rarr; Commit.</li></ul></div>
+</section>
+
+    <section class="topic" id="force-sync" data-group="HA Preparation" data-tag="HA PREP">
+  <div class="topic-head"><span class="eyebrow">HA Preparation</span><span class="tag">HA PREP</span>
+    <h2>Force a Config Sync</h2></div>
+<div class="kid"><p>Copy the <i>right</i> homework onto your friend&rsquo;s page &mdash; never copy the wrong one over the right one.</p></div>
+<p>Run from the active peer. Only needed if the running config shows out-of-sync, but harmless to run as a belt-and-braces step before you start.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show high-availability state | match Configuration</b>       <i>is the running config in sync between peers</i>
+<u>Running Configuration: synchronized</u>
+
+<i>If it is out-of-sync, push from active to peer:</i>
+admin@fw-01(active)&gt; <b>request high-availability sync-to-remote running-config</b>  <i>push THIS box's config to the peer — overwrites theirs, so direction matters</i>
+
+<i>Re-check:</i>
+admin@fw-01(active)&gt; <b>show high-availability state | match Configuration</b>       <i>is the running config in sync between peers</i></pre>
+<div class="warn"><p>This overwrites the peer's running configuration with the local one. Run it <b>from the peer you know is correct</b> — normally the active. Running it from the wrong box propagates the wrong config, and the wrong config is now on both firewalls.</p></div>
+<div class="gui"><ul><li>Device &rarr; High Availability &rarr; <b>Operational Commands</b> &rarr; <b>Sync to peer</b>. Run it from the peer that has the correct config.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: HA Upgrade ---------- -->
+
+    <section class="topic" id="ha-sequence" data-group="HA Upgrade" data-tag="SEQUENCE">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">SEQUENCE</span>
+    <h2>The Active/Passive Sequence</h2></div>
+<div class="kid"><p>Two goalkeepers. One steps off to change boots while the other guards the net. Then they swap. The net is never empty.</p></div>
+<p>Palo Alto's current documented manual procedure for active/passive is <b>active-first</b>: suspend the active peer to force a failover, upgrade it, return it to functional, then suspend the secondary and upgrade that.</p>
+<figure><svg viewBox="0 0 760 430" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+<rect x="20" y="14" width="330" height="36" rx="6" fill="#ffb703" fill-opacity="0.08" stroke="#ffb703" stroke-width="1.6"/>
+<text x="185" y="37" fill="#ffb703" font-size="10.5" font-weight="bold" text-anchor="middle">FW-01 · ACTIVE · old version</text>
+<rect x="410" y="14" width="330" height="36" rx="6" fill="#2ec4b6" fill-opacity="0.07" stroke="#2ec4b6" stroke-width="1.6"/>
+<text x="575" y="37" fill="#2ec4b6" font-size="10.5" font-weight="bold" text-anchor="middle">FW-02 · PASSIVE · old version</text>
+
+<line x1="185" y1="50" x2="185" y2="82" stroke="#1f3b52" stroke-width="1.5"/>
+<line x1="575" y1="50" x2="575" y2="82" stroke="#1f3b52" stroke-width="1.5"/>
+
+<rect x="20" y="82" width="330" height="52" rx="6" fill="#ff6b6b" fill-opacity="0.08" stroke="#ff6b6b" stroke-width="1.5"/>
+<text x="185" y="102" fill="#ff6b6b" font-size="10" font-weight="bold" text-anchor="middle">1 · request high-availability state suspend</text>
+<text x="185" y="120" fill="#8ba3b8" font-size="8.5" text-anchor="middle">FW-01 → suspended · traffic fails over</text>
+<rect x="410" y="82" width="330" height="52" rx="6" fill="#5bd68a" fill-opacity="0.08" stroke="#5bd68a" stroke-width="1.5"/>
+<text x="575" y="108" fill="#5bd68a" font-size="10" font-weight="bold" text-anchor="middle">FW-02 → ACTIVE · carrying all traffic</text>
+
+<line x1="185" y1="134" x2="185" y2="166" stroke="#1f3b52" stroke-width="1.5"/>
+<rect x="20" y="166" width="330" height="52" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.4"/>
+<text x="185" y="186" fill="#e4edf4" font-size="10" font-weight="bold" text-anchor="middle">2 · install + 3 · restart</text>
+<text x="185" y="204" fill="#8ba3b8" font-size="8.5" text-anchor="middle">FW-01 reboots onto the new version</text>
+<text x="575" y="196" fill="#5bd68a" font-size="9" text-anchor="middle">still active · still passing traffic</text>
+
+<line x1="185" y1="218" x2="185" y2="250" stroke="#1f3b52" stroke-width="1.5"/>
+<rect x="20" y="250" width="330" height="52" rx="6" fill="#2ec4b6" fill-opacity="0.07" stroke="#2ec4b6" stroke-width="1.5"/>
+<text x="185" y="270" fill="#2ec4b6" font-size="10" font-weight="bold" text-anchor="middle">4 · state functional → PASSIVE</text>
+<text x="185" y="288" fill="#8ba3b8" font-size="8.5" text-anchor="middle">wait for running config to synchronize</text>
+
+<line x1="575" y1="218" x2="575" y2="302" stroke="#1f3b52" stroke-width="1.5"/>
+<rect x="410" y="302" width="330" height="52" rx="6" fill="#ff6b6b" fill-opacity="0.08" stroke="#ff6b6b" stroke-width="1.5"/>
+<text x="575" y="322" fill="#ff6b6b" font-size="10" font-weight="bold" text-anchor="middle">5 · suspend FW-02 · install · restart</text>
+<text x="575" y="340" fill="#8ba3b8" font-size="8.5" text-anchor="middle">FW-01 takes over on the new version</text>
+
+<line x1="185" y1="302" x2="185" y2="378" stroke="#1f3b52" stroke-width="1.5"/>
+<line x1="575" y1="354" x2="575" y2="378" stroke="#1f3b52" stroke-width="1.5"/>
+<rect x="20" y="378" width="720" height="40" rx="6" fill="#5bd68a" fill-opacity="0.07" stroke="#5bd68a" stroke-width="1.6"/>
+<text x="380" y="403" fill="#5bd68a" font-size="10.5" font-weight="bold" text-anchor="middle">6 · FW-02 functional · both on new version · re-enable preemption</text>
+<rect fill="none" stroke="#e4edf4" stroke-width="2.6" rx="8"><animate attributeName="x" values="16;16;16;406;16" keyTimes="0.000;0.200;0.400;0.600;0.800" calcMode="discrete" dur="10s" repeatCount="indefinite"/><animate attributeName="y" values="78;162;246;298;374" keyTimes="0.000;0.200;0.400;0.600;0.800" calcMode="discrete" dur="10s" repeatCount="indefinite"/><animate attributeName="width" values="338;338;338;338;728" keyTimes="0.000;0.200;0.400;0.600;0.800" calcMode="discrete" dur="10s" repeatCount="indefinite"/><animate attributeName="height" values="60;60;60;60;48" keyTimes="0.000;0.200;0.400;0.600;0.800" calcMode="discrete" dur="10s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="1;0.25;1" dur="1.2s" repeatCount="indefinite"/></rect><circle r="5" fill="#5bd68a"><animateMotion dur="10s" repeatCount="indefinite" calcMode="discrete" keyTimes="0;0.2;0.4;0.6;0.8" keyPoints="0;0;0;1;1" path="M575,160 L185,160"/></circle><text x="380" y="72" fill="#5bd68a" font-size="8.5" text-anchor="middle">green dot = the firewall carrying traffic</text></svg><figcaption>Active/passive, active-first. The white frame walks through the steps; the green dot shows which firewall carries traffic. Exactly one peer is unavailable at any moment.</figcaption></figure>
+<div class="note"><p><b>The passive-first variant.</b> Many field runbooks — including plenty that work fine — upgrade the passive peer first, verify it carries traffic after a deliberate failover, then upgrade the original active. That order tests the newly-upgraded box <i>before</i> committing both peers to the new version, which some teams prefer. Both orders are safe. What matters is that only one peer is ever out of service, and that you know which order you are following before you start.</p></div>
+</section>
+
+    <section class="topic" id="ha-suspend" data-group="HA Upgrade" data-tag="STEP 1">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">STEP 1</span>
+    <h2>Suspend the Peer You Are About to Upgrade</h2></div>
+<div class="kid"><p>Put up a "back in 5 minutes" sign. The other shop opens and customers walk next door.</p></div>
+<p>Suspending removes the firewall from HA participation. It stops passing traffic and stops competing for the active role. This is what makes the upgrade safe.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>request high-availability state suspend</b>        <i>take THIS firewall out of HA — it stops passing traffic, peer takes over</i>
+
+<i>Confirm — prompt changes and state reports suspended:</i>
+<u>admin@fw-01(suspended)&gt;</u>
+admin@fw-01(suspended)&gt; <b>show high-availability state | match State</b>  <i>local and peer role in two lines</i>
+<u>Local Information: State: suspended</u>
+<u>Peer Information: State: active</u></pre>
+<p>Verify from the <b>other</b> peer that it actually took over, and that traffic is genuinely flowing — do not take the state output as proof of service.</p>
+<pre class="cli">admin@fw-02(active)&gt; <b>show session info</b>                           <i>session count and how full the session table is</i>
+admin@fw-02(active)&gt; <b>show session all | match "flow|proto"</b>       <i>trim the session list to the useful columns</i>
+admin@fw-02(active)&gt; <b>show high-availability state | match State</b>  <i>local and peer role in two lines</i></pre>
+<div class="warn"><p>This is your real failover test. If traffic does not recover here, <b>stop</b> — put the suspended peer back with <code>request high-availability state functional</code> and investigate. You have not installed anything yet, so nothing is lost. Discovering a broken failover after you have rebooted a peer onto a new version is a much worse place to be.</p></div>
+<p>You can also drive the peer from the local box, which is useful when you only have a session to one side:</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>request high-availability state peer suspend</b>     <i>suspend the OTHER firewall from this session</i>
+admin@fw-01(active)&gt; <b>request high-availability state peer functional</b>  <i>return the OTHER firewall to service from this session</i></pre>
+<div class="gui"><ul><li>Device &rarr; High Availability &rarr; Operational Commands &rarr; <b>Suspend local device for high availability</b>.</li><li>Confirm <b>suspended</b> in the bottom-right corner; on the peer, Dashboard HA widget shows <b>active</b> and Monitor &rarr; Traffic shows live sessions.</li></ul></div>
+</section>
+
+    <section class="topic" id="ha-install" data-group="HA Upgrade" data-tag="STEP 2">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">STEP 2</span>
+    <h2>Install and Reboot</h2></div>
+<div class="kid"><p>Change clothes, then have a nap. You are only ready to play when you are fully awake &mdash; that is <code>chassis-ready: yes</code>.</p></div>
+<p>Install writes the image to the alternate partition. Nothing changes until the reboot.</p>
+<pre class="cli">admin@fw-01(suspended)&gt; <b>request system software install version &lt;target&gt;</b>  <i>write the image to the spare partition — no effect until reboot</i>
+<u>Executing this command will install a new version of software. It will not take</u>
+<u>effect until system is restarted. Do you want to continue? (y or n)</u>  <b>y</b>    <i>confirm — the install prompt wants a y before it queues the job</i>
+<u>Software install job enqueued with jobid 332.</u>
+
+admin@fw-01(suspended)&gt; <b>show jobs id 332</b>                                  <i>poll that job until it reports FIN / OK</i>
+<i>wait for FIN / OK — do NOT reboot before the install job finishes</i>
+
+admin@fw-01(suspended)&gt; <b>request restart system</b>                            <i>reboot NOW — no confirmation, no grace period</i>
+<i>session drops; allow 10-15 minutes on a mid-range chassis before it answers again</i></pre>
+<p>After it comes back:</p>
+<pre class="cli">admin@fw-01(suspended)&gt; <b>show system info | match sw-version</b>  <i>just the running PAN-OS version</i>
+<u>sw-version: &lt;target&gt;</u>
+admin@fw-01(suspended)&gt; <b>show high-availability state</b>         <i>the main HA summary — roles, sync status, link health</i>
+admin@fw-01(suspended)&gt; <b>show chassis-ready</b>                   <i>is the DATAPLANE up — 'yes' means it can pass traffic, not just answer SSH</i>
+<u>yes</u>     <i>&lt;- dataplane is up, not just the management plane</i></pre>
+<div class="warn"><p>The management interface answers SSH well before the dataplane is ready. <code>show chassis-ready</code> returning <b>yes</b> is the signal to proceed. Bringing a peer back to functional while the dataplane is still initialising is how a "clean" upgrade drops traffic.</p></div>
+<div class="note"><p>The firewall stays <b>suspended</b> across the reboot. That is intentional — it comes back on the new version without immediately trying to take traffic.</p></div>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; <b>Install</b> on the target &rarr; reboot when prompted, or Device &rarr; Setup &rarr; Operations &rarr; <b>Reboot Device</b>.</li><li>No GUI <code>chassis-ready</code>: SSH in and run it, or wait for Dashboard interfaces to show up plus a couple of minutes.</li></ul></div>
+</section>
+
+    <section class="topic" id="ha-functional" data-group="HA Upgrade" data-tag="STEP 3">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">STEP 3</span>
+    <h2>Return to Functional and Wait for Sync</h2></div>
+<div class="kid"><p>Come back to the team, but sit on the bench first. Watch until you both know the same game plan (config synchronized).</p></div>
+<pre class="cli">admin@fw-01(suspended)&gt; <b>request high-availability state functional</b>            <i>put THIS firewall back into HA — it rejoins as passive</i>
+
+<u>admin@fw-01(passive)&gt;</u>    <i>&lt;- active/passive: it comes back as passive</i>
+
+admin@fw-01(passive)&gt; <b>show high-availability state | match "State|Configuration"</b>  <i>role plus whether the config has synchronised</i>
+<u>Local Information: State: passive</u>
+<u>Peer Information: State: active</u>
+<u>Running Configuration: synchronized</u></pre>
+<p>Do not move to the second peer until <b>Running Configuration: synchronized</b> appears. The two peers are now running different PAN-OS versions, which is expected and supported for the duration of the window — but only if the config is agreed between them.</p>
+<div class="human"><p>You have one foot on each step of the staircase. It is a perfectly stable place to stand for a few minutes. It is not a place to stop for the night.</p></div>
+<div class="gui"><ul><li>Operational Commands &rarr; <b>Make local device functional for high availability</b>. Bottom-right should show <b>passive</b> (A/P) or <b>active</b> (A/A).</li><li>Dashboard HA widget &rarr; <b>Running Config: synchronized</b> before you touch the second peer.</li></ul></div>
+</section>
+
+    <section class="topic" id="ha-second-peer" data-group="HA Upgrade" data-tag="STEP 4">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">STEP 4</span>
+    <h2>Repeat on the Second Peer</h2></div>
+<div class="kid"><p>Now the other goalkeeper changes boots. For these few minutes there is only one goalkeeper &mdash; be quick and careful.</p></div>
+<p>Same three commands, other box. The upgraded peer takes over as active.</p>
+<pre class="cli">admin@fw-02(active)&gt; <b>request high-availability state suspend</b>              <i>take THIS firewall out of HA — it stops passing traffic, peer takes over</i>
+<i>FW-01 (already on the new version) becomes active — verify traffic on it now</i>
+
+admin@fw-02(suspended)&gt; <b>request system software install version &lt;target&gt;</b>  <i>write the image to the spare partition — no effect until reboot</i>
+admin@fw-02(suspended)&gt; <b>show jobs id &lt;jobid&gt;</b>                              <i>poll one job — wait for Status FIN and Result OK</i>
+admin@fw-02(suspended)&gt; <b>request restart system</b>                            <i>reboot NOW — no confirmation, no grace period</i>
+
+<i>after reboot:</i>
+admin@fw-02(suspended)&gt; <b>show system info | match sw-version</b>               <i>just the running PAN-OS version</i>
+admin@fw-02(suspended)&gt; <b>show chassis-ready</b>                                <i>is the DATAPLANE up — 'yes' means it can pass traffic, not just answer SSH</i>
+admin@fw-02(suspended)&gt; <b>request high-availability state functional</b>        <i>put THIS firewall back into HA — it rejoins as passive</i></pre>
+<div class="warn"><p>Between suspending FW-02 and FW-02 coming back functional, you are running on a <b>single firewall</b> with no redundancy. That is the exposed part of the window. Keep it short and do not start unrelated troubleshooting in the middle of it.</p></div>
+<div class="gui"><ul><li>Same clicks on FW-02: Suspend local device &rarr; Device &rarr; Software &rarr; Install &rarr; Reboot &rarr; Make local device functional.</li></ul></div>
+</section>
+
+    <section class="topic" id="ha-restore" data-group="HA Upgrade" data-tag="RESTORE">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">RESTORE</span>
+    <h2>Restore Preemption and Monitoring</h2></div>
+<div class="kid"><p>Turn the smoke alarm back on. Put everything back how you found it.</p></div>
+<p>Undo exactly what you disabled — and only what you disabled. If preemption was already <code>no</code> before you started, leave it <code>no</code>.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>configure</b>                                                <i>enter configuration mode — the prompt changes from > to #</i>
+admin@fw-01(active)# <b>set deviceconfig high-availability group election-option preemptive yes</b>  <i>restore automatic failback to the preferred peer</i>
+admin@fw-01(active)# <b>set deviceconfig high-availability group monitoring link-monitoring enabled yes</b>  <i>restore link-failure detection</i>
+admin@fw-01(active)# <b>set deviceconfig high-availability group monitoring path-monitoring enabled yes</b>  <i>restore path-failure detection</i>
+admin@fw-01(active)# <b>commit</b>                                                   <i>apply the candidate config — nothing above is live until this runs</i>
+admin@fw-01(active)# <b>exit</b>                                                     <i>leave configuration mode, back to the > prompt</i>
+
+admin@fw-01(active)&gt; <b>show high-availability state | match Preempt</b>             <i>is preemption on or off right now</i>
+<u>Preemptive: yes</u></pre>
+<h3>Putting the original active back in charge</h3>
+<p>If preemption is enabled and FW-01 has the higher priority, it will reclaim active on its own. If preemption stays disabled, force it:</p>
+<pre class="cli"><i>On the current active (FW-02):</i>
+admin@fw-02(active)&gt; <b>request high-availability state suspend</b>             <i>take THIS firewall out of HA — it stops passing traffic, peer takes over</i>
+<i>wait 1-2 minutes, confirm FW-01 is active and passing traffic</i>
+admin@fw-02(suspended)&gt; <b>request high-availability state functional</b>       <i>put THIS firewall back into HA — it rejoins as passive</i>
+admin@fw-02(passive)&gt; <b>show high-availability state | match "Mode|State"</b>  <i>just the roles — who is active, who is passive</i></pre>
+<div class="warn"><p>Leaving preemption disabled after the window is one of the most common post-upgrade loose ends. It is invisible until months later, when a failover happens and the pair never fails back. Put it on the change closure checklist.</p></div>
+<div class="gui"><ul><li>Election Settings &rarr; select <b>Preemptive</b> &rarr; OK &rarr; Commit (only if it was on before). Link and Path Monitoring &rarr; re-select <b>Enabled</b> &rarr; Commit.</li></ul></div>
+</section>
+
+    <section class="topic" id="ha-active-active" data-group="HA Upgrade" data-tag="ACTIVE/ACTIVE">
+  <div class="topic-head"><span class="eyebrow">HA Upgrade</span><span class="tag">ACTIVE/ACTIVE</span>
+    <h2>Active/Active Differences</h2></div>
+<div class="kid"><p>Two shop tills, both open. When one closes to fix it, the other till takes every customer &mdash; make sure it can.</p></div>
+<p>The command sequence is identical. Three things change.</p>
+<ul>
+<li><b>Order does not matter.</b> Either peer can go first. Documentation convention starts with active-primary.</li>
+<li><b>Returning to functional gives you active, not passive.</b> After <code>request high-availability state functional</code> expect <code>active-primary</code> or <code>active-secondary</code>, not passive.</li>
+<li><b>Both peers pass traffic afterwards.</b> Your validation must confirm sessions on both, not just one.</li>
+</ul>
+<pre class="cli">admin@fw-01(active-primary)&gt; <b>show high-availability state | match "Mode|State"</b>  <i>just the roles — who is active, who is passive</i>
+<u>Mode: Active-Active</u>
+<u>Local Information: State: active-primary</u>
+<u>Peer Information: State: active-secondary</u></pre>
+<div class="note"><p>Capacity planning matters more here. In active/passive you were always running on one box. In active/active, suspending a peer means the survivor absorbs the full load — check that it can before the window, not during it.</p></div>
+<div class="gui"><ul><li>Bottom-right shows <b>active-primary</b> / <b>active-secondary</b>. Monitor &rarr; Traffic filtered per firewall should show sessions on both.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: Standalone Upgrade ---------- -->
+
+    <section class="topic" id="standalone-sequence" data-group="Standalone Upgrade" data-tag="NO HA">
+  <div class="topic-head"><span class="eyebrow">Standalone Upgrade</span><span class="tag">NO HA</span>
+    <h2>Single Firewall — Full Sequence</h2></div>
+<div class="kid"><p>Only one shop, no neighbour. When it closes to fix it, it is simply closed. Do the tidying in daylight; close only for the actual fix.</p></div>
+<p>No peer means no failover, no suspend step, and no way to hide the reboot. Everything else is the same, minus the HA sections.</p>
+<figure><svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">
+<rect x="20" y="20" width="140" height="46" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.5"/>
+<text x="90" y="41" fill="#e4edf4" font-size="9.5" font-weight="bold" text-anchor="middle">BACKUP</text>
+<text x="90" y="57" fill="#8ba3b8" font-size="8" text-anchor="middle">config + tech-support</text>
+<line x1="160" y1="43" x2="196" y2="43" stroke="#1f3b52" stroke-width="1.6"/>
+<rect x="196" y="20" width="140" height="46" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.5"/>
+<text x="266" y="41" fill="#e4edf4" font-size="9.5" font-weight="bold" text-anchor="middle">CONTENT</text>
+<text x="266" y="57" fill="#8ba3b8" font-size="8" text-anchor="middle">download + install</text>
+<line x1="336" y1="43" x2="372" y2="43" stroke="#1f3b52" stroke-width="1.6"/>
+<rect x="372" y="20" width="140" height="46" rx="6" fill="#152a3d" stroke="#8ba3b8" stroke-width="1.5"/>
+<text x="442" y="41" fill="#e4edf4" font-size="9.5" font-weight="bold" text-anchor="middle">DOWNLOAD</text>
+<text x="442" y="57" fill="#8ba3b8" font-size="8" text-anchor="middle">PAN-OS image</text>
+<line x1="512" y1="43" x2="548" y2="43" stroke="#1f3b52" stroke-width="1.6"/>
+<rect x="548" y="20" width="140" height="46" rx="6" fill="#2ec4b6" fill-opacity="0.07" stroke="#2ec4b6" stroke-width="1.5"/>
+<text x="618" y="41" fill="#2ec4b6" font-size="9.5" font-weight="bold" text-anchor="middle">INSTALL</text>
+<text x="618" y="57" fill="#8ba3b8" font-size="8" text-anchor="middle">no impact yet</text>
+
+<line x1="618" y1="66" x2="618" y2="96" stroke="#1f3b52" stroke-width="1.6"/>
+<rect x="196" y="96" width="492" height="58" rx="7" fill="#ff6b6b" fill-opacity="0.08" stroke="#ff6b6b" stroke-width="1.8"/>
+<text x="442" y="120" fill="#ff6b6b" font-size="11" font-weight="bold" text-anchor="middle">REBOOT · request restart system</text>
+<text x="442" y="140" fill="#8ba3b8" font-size="8.5" text-anchor="middle">THE OUTAGE · all traffic through this firewall stops · 10-20 minutes</text>
+
+<line x1="442" y1="154" x2="442" y2="184" stroke="#1f3b52" stroke-width="1.6"/>
+<rect x="196" y="184" width="492" height="46" rx="6" fill="#5bd68a" fill-opacity="0.07" stroke="#5bd68a" stroke-width="1.6"/>
+<text x="442" y="205" fill="#5bd68a" font-size="10" font-weight="bold" text-anchor="middle">VALIDATE · show chassis-ready · sw-version · sessions · logs</text>
+<text x="442" y="221" fill="#8ba3b8" font-size="8" text-anchor="middle">do not close the change until traffic is confirmed</text>
+<rect fill="none" stroke="#e4edf4" stroke-width="2.6" rx="8"><animate attributeName="x" values="16;192;368;544;192;192" keyTimes="0.000;0.167;0.333;0.500;0.667;0.833" calcMode="discrete" dur="9s" repeatCount="indefinite"/><animate attributeName="y" values="16;16;16;16;92;180" keyTimes="0.000;0.167;0.333;0.500;0.667;0.833" calcMode="discrete" dur="9s" repeatCount="indefinite"/><animate attributeName="width" values="148;148;148;148;500;500" keyTimes="0.000;0.167;0.333;0.500;0.667;0.833" calcMode="discrete" dur="9s" repeatCount="indefinite"/><animate attributeName="height" values="54;54;54;54;66;54" keyTimes="0.000;0.167;0.333;0.500;0.667;0.833" calcMode="discrete" dur="9s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="1;0.25;1" dur="1.2s" repeatCount="indefinite"/></rect></svg><figcaption>Standalone: the white frame walks the steps. One hard outage (red), everything either side of it is non-disruptive.</figcaption></figure>
+<ol class="steps">
+<li><b>Baseline</b> — <code>show system info</code>, <code>show session info</code>, <code>show interface all</code>.</li>
+<li><b>Back up</b> — named snapshot plus off-box export, and a tech-support dump.</li>
+<li><b>Content first</b> — download and install App/Threat and antivirus.</li>
+<li><b>Download the image</b> — <code>request system software download version &lt;target&gt;</code>, plus the base image if you are landing on a hotfix.</li>
+<li><b>Install</b> — <code>request system software install version &lt;target&gt;</code>, wait for <code>show jobs id</code> to report FIN/OK.</li>
+<li><b>Reboot</b> — <code>request restart system</code>. This is the outage.</li>
+<li><b>Validate</b> — <code>show chassis-ready</code>, version, sessions, interfaces, logs.</li>
+</ol>
+<pre class="cli"><i>The whole standalone path, condensed:</i>
+admin@fw-01&gt; <b>show system info | match sw-version</b>                              <i>just the running PAN-OS version</i>
+admin@fw-01&gt; <b>configure</b>                                                        <i>enter configuration mode — the prompt changes from > to #</i>
+admin@fw-01# <b>save config to Pre_Upgrade_2026-08-24.xml</b>                        <i>snapshot the config to the firewall's OWN disk — convenient, not a real backup</i>
+admin@fw-01# <b>exit</b>                                                             <i>leave configuration mode, back to the > prompt</i>
+admin@fw-01&gt; <b>scp export configuration from running-config.xml to user@10.20.30.40:/backups/</b>  <i>copy the live config off the box to a remote server</i>
+admin@fw-01&gt; <b>request tech-support dump</b>                                        <i>generate the diagnostic bundle TAC will ask for — do it BEFORE the change</i>
+admin@fw-01&gt; <b>request content upgrade download latest</b>                          <i>fetch the newest Applications and Threats content</i>
+admin@fw-01&gt; <b>request content upgrade install version latest</b>                   <i>activate the App and Threat content — no reboot needed</i>
+admin@fw-01&gt; <b>request system software download version &lt;target&gt;</b>                <i>pull the image onto the firewall — non-disruptive, do it early</i>
+admin@fw-01&gt; <b>show jobs id &lt;jobid&gt;</b>                                             <i>poll one job — wait for Status FIN and Result OK</i>
+admin@fw-01&gt; <b>request system software install version &lt;target&gt;</b>                 <i>write the image to the spare partition — no effect until reboot</i>
+admin@fw-01&gt; <b>show jobs id &lt;jobid&gt;</b>                                             <i>poll one job — wait for Status FIN and Result OK</i>
+admin@fw-01&gt; <b>request restart system</b>                                           <i>reboot NOW — no confirmation, no grace period</i></pre>
+<div class="gui"><ul><li>Click-by-click version: <a href="#gui-standalone">Standalone &mdash; GUI Sequence</a>.</li></ul></div>
+</section>
+
+    <section class="topic" id="standalone-outage" data-group="Standalone Upgrade" data-tag="OUTAGE">
+  <div class="topic-head"><span class="eyebrow">Standalone Upgrade</span><span class="tag">OUTAGE</span>
+    <h2>Managing the Outage</h2></div>
+<div class="kid"><p>The lights coming on does not mean the oven is hot. Wait until you see real cookies (sessions).</p></div>
+<div class="tbl"><table><thead><tr><th>Phase</th><th>Typical duration</th><th>Impact</th></tr></thead><tbody>
+<tr><td>Content download + install</td><td>10–25 min</td><td>None</td></tr>
+<tr><td>Image download</td><td>15–20 min</td><td>None</td></tr>
+<tr><td>Software install</td><td>5–15 min</td><td>None — writes to the alternate partition</td></tr>
+<tr><td>Reboot</td><td>10–20 min</td><td><b>Full outage</b></td></tr>
+<tr><td>Dataplane initialisation</td><td>2–5 min after SSH answers</td><td>Partial — mgmt up, traffic not yet</td></tr>
+</tbody></table></div>
+<div class="warn"><p>The last row catches people out. The box answers SSH, someone declares success, and the change is closed while traffic is still black-holing. <code>show chassis-ready</code> must return <b>yes</b>, and you must see real sessions, before you call it done.</p></div>
+<div class="human"><p>Only the reboot is the outage. Everything before it is preparation you can do in daylight — which is exactly why you should, leaving the window itself as short as possible.</p></div>
+</section>
+
+    <!-- ---------- GROUP: Firewall GUI ---------- -->
+
+    <section class="topic" id="gui-orientation" data-group="Firewall GUI" data-tag="SCREEN MAP">
+  <div class="topic-head"><span class="eyebrow">Firewall GUI</span><span class="tag">SCREEN MAP</span>
+    <h2>Where Everything Lives in the Web Interface</h2></div>
+<p>Every CLI step in this runbook has a GUI equivalent. The web interface is the better choice when you have no SCP or TFTP target to export a config to, when the change is being run by someone who does not live in the CLI, or when you want a second pair of eyes watching a screen rather than a scrollback buffer.</p>
+<div class="tbl"><table><thead><tr><th>Task</th><th>Where</th></tr></thead><tbody>
+<tr><td>Current version</td><td>Dashboard &rarr; General Information widget, or Device &rarr; Setup &rarr; Management</td></tr>
+<tr><td>HA health</td><td>Dashboard &rarr; High Availability widget</td></tr>
+<tr><td>Config backup</td><td>Device &rarr; Setup &rarr; Operations</td></tr>
+<tr><td>Tech-support file</td><td>Device &rarr; Support</td></tr>
+<tr><td>Content updates</td><td>Device &rarr; Dynamic Updates</td></tr>
+<tr><td>PAN-OS images</td><td>Device &rarr; Software</td></tr>
+<tr><td>Preemption setting</td><td>Device &rarr; High Availability &rarr; Election Settings</td></tr>
+<tr><td>Link / path monitoring</td><td>Device &rarr; High Availability &rarr; Link and Path Monitoring</td></tr>
+<tr><td>Suspend / make functional</td><td>Device &rarr; High Availability &rarr; Operational Commands</td></tr>
+<tr><td>Reboot</td><td>Device &rarr; Setup &rarr; Operations &rarr; Reboot Device</td></tr>
+<tr><td>Job status</td><td>Tasks (bottom-right corner of every page)</td></tr>
+</tbody></table></div>
+<div class="human"><p>The CLI tells you what happened. The GUI shows you what is happening. During a reboot the Dashboard High Availability widget updates on its own, which beats re-running <code>show high-availability state</code> every thirty seconds.</p></div>
+<div class="note"><p>The bottom-right corner of the web interface is the most under-used part of it. <b>Tasks</b> is the GUI equivalent of <code>show jobs all</code>, and the small status area next to it shows the local HA state live &mdash; the same information the CLI prompt gives you.</p></div>
+</section>
+
+    <section class="topic" id="gui-backup" data-group="Firewall GUI" data-tag="NO SCP NEEDED">
+  <div class="topic-head"><span class="eyebrow">Firewall GUI</span><span class="tag">NO SCP NEEDED</span>
+    <h2>Backing Up Without an SCP Server</h2></div>
+<p>This is the strongest argument for the GUI path. The CLI can only push a config to a remote host &mdash; if you have no SCP or TFTP server, you have no off-box backup. The web interface downloads it straight to your laptop through the browser.</p>
+<ol class="steps">
+<li><b>Device &rarr; Setup &rarr; Operations.</b> The Configuration Management panel holds every backup option.</li>
+<li><b>Save named configuration snapshot.</b> Name it something dated &mdash; <code>Pre_Upgrade_2026-08-24</code>. This is the on-box copy, the GUI twin of <code>save config to</code>.</li>
+<li><b>Export named configuration snapshot.</b> Pick <code>running-config.xml</code> from the dropdown, click OK, and the browser downloads the file. <mark>This is your real off-box backup.</mark></li>
+<li><b>Save it somewhere that is not the firewall</b> &mdash; change ticket, file share, anywhere you can reach when the appliance is down.</li>
+<li><b>Export device state.</b> Same panel. Downloads the full bundle &mdash; running config plus everything Panorama pushed. This is what you import onto a replacement firewall.</li>
+<li><b>Repeat on the peer.</b> HA does not do this for you.</li>
+</ol>
+<div class="tbl"><table><thead><tr><th>Button</th><th>What it actually does</th></tr></thead><tbody>
+<tr><td>Save named configuration snapshot</td><td>Writes a copy to the firewall's own disk. Convenient, not a backup.</td></tr>
+<tr><td>Export named configuration snapshot</td><td>Downloads a saved snapshot through your browser.</td></tr>
+<tr><td>Export configuration version</td><td>Downloads any previously committed version by number.</td></tr>
+<tr><td>Export device state</td><td>Running config plus Panorama-pushed device-group and template settings (and, on a GlobalProtect portal, certificates and satellites). The fullest restore bundle &mdash; but no licences, logs or images.</td></tr>
+<tr><td>Load named configuration snapshot</td><td>Loads a snapshot into the candidate config. Still needs a commit.</td></tr>
+</tbody></table></div>
+<h3>Tech-support file</h3>
+<p><b>Device &rarr; Support &rarr; Generate Tech Support File</b>, click Yes. When it finishes, a Download link appears &mdash; again, straight through the browser, no server required.</p>
+<div class="warn"><p>The export dialog is a dropdown of snapshots that already exist. If you skipped step 2, there is nothing useful to select. <b>Save first, then export</b> &mdash; people miss this and end up exporting a snapshot from six months ago.</p></div>
+</section>
+
+    <section class="topic" id="gui-content" data-group="Firewall GUI" data-tag="CONTENT">
+  <div class="topic-head"><span class="eyebrow">Firewall GUI</span><span class="tag">CONTENT</span>
+    <h2>Dynamic Updates in the GUI</h2></div>
+<p><b>Device &rarr; Dynamic Updates.</b> One row per update type, with a Currently Installed marker showing what is live.</p>
+<ol class="steps">
+<li><b>Check Now</b> (bottom of the page) to refresh the list from Palo Alto's servers.</li>
+<li>Find <b>Applications and Threats</b>. Compare Currently Installed against the minimum version in your target release's release notes.</li>
+<li>Click <b>Download</b> on the version you want. When it completes the Action link changes from Download to <b>Install</b>.</li>
+<li>Click <b>Install</b>. No reboot needed.</li>
+<li>Repeat for <b>Antivirus</b>, and for <b>WildFire</b> if you hold that subscription.</li>
+<li><mark>Repeat all of it on the peer.</mark> Content is not synchronised by HA.</li>
+</ol>
+<div class="note"><p>The Action link changing from Download to Install is the GUI's way of telling you the download finished &mdash; the same signal as a job reaching FIN/OK. Rows you have no licence for simply will not offer a download, which is cleaner than the CLI's <i>There is not wildfire license on the box</i> error.</p></div>
+<h3>Offline content</h3>
+<p>No internet from the management interface? Download the content file from the support portal on a machine that does have access, then <b>Upload</b> at the bottom of the Dynamic Updates page and choose <b>Install From File</b>.</p>
+</section>
+
+    <section class="topic" id="gui-software" data-group="Firewall GUI" data-tag="SOFTWARE">
+  <div class="topic-head"><span class="eyebrow">Firewall GUI</span><span class="tag">SOFTWARE</span>
+    <h2>Downloading and Installing PAN-OS</h2></div>
+<p><b>Device &rarr; Software.</b> This page is the GUI equivalent of <code>request system software info</code> &mdash; a version list with a Downloaded column and a Currently Installed marker.</p>
+<ol class="steps">
+<li><b>Check Now</b> to refresh the available versions.</li>
+<li>On PAN-OS 10.2.10 and later 10.2 releases, and on 11.1.3 and later, the page shows <b>preferred releases and their base releases</b> by default. The <b>Base Releases</b> and <b>Preferred Releases</b> checkboxes filter the view &mdash; clearing one shows only the other.</li>
+<li><b>Download the base image first if your target is a hotfix.</b> For <code>11.1.4-h13</code> that means downloading <code>11.1.0</code> as well. The base image is downloaded only, never installed.</li>
+<li><b>Download</b> your target version. Watch progress in the dialog or in Tasks.</li>
+<li><b>Install</b> once Downloaded shows a tick. Nothing changes until the reboot.</li>
+<li>When prompted to reboot, click <b>Yes</b>. If you are not prompted, go to <b>Device &rarr; Setup &rarr; Operations &rarr; Reboot Device</b>.</li>
+</ol>
+<div class="warn"><p>Only versions for the next available release are listed &mdash; unless the box is skip-eligible (see <a href="#go-12">Going to 12.1</a>). If your target is not there, you are more than one feature release away from it &mdash; see <a href="#upgrade-path">The Upgrade Path</a>. Clicking Check Now repeatedly will not conjure it.</p></div>
+<h3>No internet from the management interface</h3>
+<p>Download the image from the Palo Alto Networks support portal on another machine, then use <b>Upload</b> at the bottom of the Software page and <b>Install From File</b>. The base-image rule still applies &mdash; upload both files.</p>
+<div class="note"><p>If a download errors partway, click Check Now again to refresh the image list before retrying. A stale list is a common cause of a download that will not start.</p></div>
+</section>
+
+    <section class="topic" id="gui-ha-sequence" data-group="Firewall GUI" data-tag="HA SEQUENCE">
+  <div class="topic-head"><span class="eyebrow">Firewall GUI</span><span class="tag">HA SEQUENCE</span>
+    <h2>HA Pair &mdash; Full GUI Sequence</h2></div>
+<p>Same shape as the <a href="#ha-sequence">CLI sequence</a>, and the same active-first ordering. Two browser tabs, one per peer, is the sane way to run it.</p>
+<ol class="steps">
+<li><b>Back up both peers</b> &mdash; save and export the config, generate tech-support files. See <a href="#gui-backup">Backing Up Without an SCP Server</a>.</li>
+<li><b>Update content on both peers</b> &mdash; Device &rarr; Dynamic Updates.</li>
+<li><b>Download the image on both peers</b> &mdash; Device &rarr; Software. Download only; do not install yet.</li>
+<li><b>Disable preemption.</b> Device &rarr; High Availability &rarr; edit <b>Election Settings</b> &rarr; clear <b>Preemptive</b> &rarr; OK &rarr; <b>Commit</b>. One peer only, but the commit must succeed before you go further. Note what it was set to first.</li>
+<li><b>Suspend the active peer.</b> Device &rarr; High Availability &rarr; Operational Commands &rarr; <b>Suspend local device for high availability</b>. Confirm the state shows suspended in the bottom-right corner.</li>
+<li><b>Verify the failover worked</b> &mdash; on the other peer, check the Dashboard High Availability widget shows it active, and confirm real traffic in Monitor &rarr; Traffic. <mark>If traffic has not recovered, make the peer functional again and stop.</mark></li>
+<li><b>Install on the suspended peer</b> &mdash; Device &rarr; Software &rarr; Install, then reboot when prompted.</li>
+<li><b>Wait for it to come back</b>, then confirm the version in the Dashboard General Information widget.</li>
+<li><b>Make it functional</b> &mdash; Operational Commands &rarr; <b>Make local device functional for high availability</b>. Expect <b>passive</b> in active/passive, <b>active</b> in active/active.</li>
+<li><b>Wait for config sync.</b> Dashboard &rarr; High Availability widget &rarr; <b>Running Config: synchronized</b>. Do not proceed until you see it.</li>
+<li><b>Repeat steps 5&ndash;10 on the second peer.</b></li>
+<li><b>Re-enable preemption</b> &mdash; Election Settings &rarr; select Preemptive &rarr; OK &rarr; Commit. Only if it was enabled to begin with.</li>
+</ol>
+<div class="tbl"><table><thead><tr><th>CLI command</th><th>GUI equivalent</th></tr></thead><tbody>
+<tr><td>request high-availability state suspend</td><td>Operational Commands &rarr; Suspend local device for high availability</td></tr>
+<tr><td>request high-availability state functional</td><td>Operational Commands &rarr; Make local device functional for high availability</td></tr>
+<tr><td>request high-availability state peer suspend</td><td>Operational Commands &rarr; Suspend peer device (or switch context to the peer)</td></tr>
+<tr><td>request high-availability sync-to-remote running-config</td><td>Operational Commands &rarr; Sync to peer</td></tr>
+<tr><td>show high-availability state</td><td>Dashboard &rarr; High Availability widget</td></tr>
+<tr><td>show jobs all</td><td>Tasks, bottom-right corner</td></tr>
+<tr><td>show chassis-ready</td><td>No direct equivalent &mdash; see the warning below</td></tr>
+</tbody></table></div>
+<div class="warn"><p>The GUI has no <code>show chassis-ready</code> button. The web interface answering does <b>not</b> mean the dataplane is up. If you have any CLI access at all, SSH in and run <code>show chassis-ready</code> before making a peer functional. Failing that, wait for the Dashboard interface widget to show links up and give it a couple of extra minutes.</p></div>
+</section>
+
+    <section class="topic" id="gui-standalone" data-group="Firewall GUI" data-tag="NO HA">
+  <div class="topic-head"><span class="eyebrow">Firewall GUI</span><span class="tag">NO HA</span>
+    <h2>Standalone &mdash; GUI Sequence</h2></div>
+<p>The HA steps drop out entirely. What remains is preparation, one reboot, and validation.</p>
+<ol class="steps">
+<li><b>Device &rarr; Setup &rarr; Operations</b> &mdash; save a named snapshot, then export it to your laptop.</li>
+<li><b>Device &rarr; Support</b> &mdash; generate and download a tech-support file.</li>
+<li><b>Device &rarr; Dynamic Updates</b> &mdash; Check Now, download and install Applications and Threats, then Antivirus.</li>
+<li><b>Device &rarr; Software</b> &mdash; Check Now, download the base image if your target is a hotfix, then download the target.</li>
+<li><b>Install</b> the target. Still no impact at this point.</li>
+<li><b>Reboot</b> when prompted, or Device &rarr; Setup &rarr; Operations &rarr; Reboot Device. <mark>This is the outage.</mark></li>
+<li><b>Validate</b> &mdash; Dashboard General Information for the version, Monitor &rarr; Traffic for real sessions, Monitor &rarr; System log for errors.</li>
+</ol>
+<div class="warn"><p>Same trap as the CLI path, and worse in a browser: the login page returning feels like success. It only means the management plane is up. Confirm actual traffic in Monitor &rarr; Traffic before you close the change.</p></div>
+</section>
+
+    <!-- ---------- GROUP: Panorama GUI ---------- -->
+
+    <section class="topic" id="pano-orientation" data-group="Panorama GUI" data-tag="SCOPE">
+  <div class="topic-head"><span class="eyebrow">Panorama GUI</span><span class="tag">SCOPE</span>
+    <h2>When to Drive the Upgrade From Panorama</h2></div>
+<div class="kid"><p>The teacher (Panorama) must know the new lesson before the class (firewalls) learns it.</p></div>
+<p>Panorama is the right tool when you are upgrading more than a couple of firewalls, when the firewalls have no direct internet access but Panorama does, or when you want one audit trail across a fleet. It is the wrong tool for a single standalone firewall &mdash; that is more clicks, not fewer.</p>
+<div class="warn"><p><b>Upgrade Panorama before the firewalls it manages.</b> Panorama must be running the same or a later PAN-OS release than its managed devices. Upgrading a firewall past its Panorama breaks management until Panorama catches up. Check the Panorama, Log Collector, Firewall and WildFire Version Compatibility matrix before you start.</p></div>
+<div class="tbl"><table><thead><tr><th>Order</th><th>Component</th></tr></thead><tbody>
+<tr><td>1</td><td>Panorama (and its HA peer, if it has one)</td></tr>
+<tr><td>2</td><td>Log Collectors</td></tr>
+<tr><td>3</td><td>WildFire appliances</td></tr>
+<tr><td>4</td><td>Firewalls</td></tr>
+</tbody></table></div>
+<div class="note"><p>Panorama deploys images and content, and it can reboot devices for you. It does <b>not</b> handle HA suspend and failover &mdash; those are still done on each firewall, either from its own web interface or by switching context to it from within Panorama. That split is the main thing to understand about the Panorama path.</p></div>
+</section>
+
+    <section class="topic" id="pano-content" data-group="Panorama GUI" data-tag="CONTENT">
+  <div class="topic-head"><span class="eyebrow">Panorama GUI</span><span class="tag">CONTENT</span>
+    <h2>Deploying Content From Panorama</h2></div>
+<p><b>Panorama &rarr; Device Deployment &rarr; Dynamic Updates.</b></p>
+<ol class="steps">
+<li><b>Check Now</b> for the latest updates. If one is available, the Action column shows a <b>Download</b> link.</li>
+<li><b>Download</b> the content release you need, if it is not already present on Panorama.</li>
+<li><b>Install</b>, then tick the firewalls to receive it, and click OK.</li>
+<li><mark>Select both peers of every HA pair.</mark> Content is not synchronised between peers, so both must be selected explicitly.</li>
+</ol>
+<div class="note"><p>This is where Panorama genuinely saves time. Pushing content to forty firewalls is one dialog here versus forty separate logins &mdash; and it happens well before the change window, since content installs are non-disruptive.</p></div>
+</section>
+
+    <section class="topic" id="pano-software" data-group="Panorama GUI" data-tag="SOFTWARE">
+  <div class="topic-head"><span class="eyebrow">Panorama GUI</span><span class="tag">SOFTWARE</span>
+    <h2>Deploying PAN-OS &mdash; The Two Checkboxes That Matter</h2></div>
+<div class="kid"><p>"Group HA Peers" means "send both goalkeepers to change boots at once". Never tick it during an upgrade.</p></div>
+<p><b>Panorama &rarr; Device Deployment &rarr; Software.</b> Images are listed per firewall model, so <code>PanOS_3400-11.1.4-h13</code> is a different row from the 5400 equivalent. Click <b>Install</b> in the Action column of the row matching the models you are upgrading.</p>
+<p>The Deploy Software file dialog then offers two checkboxes, and getting them wrong is the main way this goes badly.</p>
+<div class="tbl"><table><thead><tr><th>Checkbox</th><th>Set it to</th><th>Why</th></tr></thead><tbody>
+<tr><td>Group HA Peers</td><td><b>Cleared</b>, for HA upgrades</td><td>Leaving it selected upgrades both peers of a pair together. That is a full outage for that pair. Clear it and select one peer at a time.</td></tr>
+<tr><td>Reboot device after install</td><td><b>Selected</b></td><td>Saves a separate reboot trip. If you leave it cleared, reboot each device manually from Device &rarr; Setup &rarr; Operations afterwards.</td></tr>
+</tbody></table></div>
+<div class="warn"><p><b>Group HA Peers is the single most dangerous control on this page.</b> It sounds like a convenience &mdash; keep my pairs together &mdash; and it is exactly the opposite of what you want during an upgrade. Palo Alto's documented HA procedure says to make sure it is <b>not</b> selected, every time.</p></div>
+<h3>Standalone firewalls</h3>
+<p>Simpler: click Install, select all the non-HA firewalls you are upgrading, select <b>Reboot device after install</b>, and click OK. Grouping is irrelevant with no peers, but each one takes a real outage &mdash; batch them by change window, not by convenience.</p>
+<h3>Confirming what landed</h3>
+<p><b>Panorama &rarr; Managed Devices</b> shows the Software Version and HA status for every firewall in one table. It is the fastest fleet-wide verification you have.</p>
+</section>
+
+    <section class="topic" id="pano-ha-sequence" data-group="Panorama GUI" data-tag="HA SEQUENCE">
+  <div class="topic-head"><span class="eyebrow">Panorama GUI</span><span class="tag">HA SEQUENCE</span>
+    <h2>HA Pairs From Panorama &mdash; Passive First</h2></div>
+<div class="warn"><p><b>This ordering differs from the firewall-GUI procedure.</b> The Panorama-driven procedure upgrades the <b>passive</b> peer first, verifies it, then suspends the active peer and upgrades that. The standalone firewall procedure earlier in this runbook goes active-first. Both are documented and both are safe &mdash; but decide which one you are following before you start, and do not mix them mid-change.</p></div>
+<ol class="steps">
+<li><b>Content to both peers</b> &mdash; Panorama &rarr; Device Deployment &rarr; Dynamic Updates.</li>
+<li><b>Disable preemption</b> on the first peer of each pair. Switch context to the firewall, Device &rarr; High Availability &rarr; Election Settings &rarr; clear Preemptive &rarr; Commit. One peer per pair is enough.</li>
+<li><b>Deploy to the passive peer.</b> Panorama &rarr; Device Deployment &rarr; Software &rarr; Install on the right model row. Select <b>only</b> the passive peer of each pair (active-secondary for active/active). <mark>Group HA Peers cleared</mark>, <b>Reboot device after install</b> selected. OK.</li>
+<li><b>Wait for the reboot to finish.</b> Do not start the next step early.</li>
+<li><b>Verify</b> in Panorama &rarr; Managed Devices that the version is correct and the upgraded peer is <b>still passive</b>.</li>
+<li><b>Suspend the active peer.</b> Switch context to it &rarr; Device &rarr; High Availability &rarr; Operational Commands &rarr; Suspend local device. The upgraded peer takes over &mdash; confirm traffic is flowing on it.</li>
+<li><b>Deploy to the now-suspended peer</b> &mdash; same dialog, this time selecting the other half of each pair. Group HA Peers still cleared, Reboot device after install still selected.</li>
+<li><b>Wait for it to come back</b>, then <b>Make local device functional</b> from its Operational Commands.</li>
+<li><b>Wait for config sync</b>, then <b>re-enable preemption</b> where you disabled it.</li>
+</ol>
+<div class="human"><p>Panorama does the boring, repeatable part &mdash; shipping images and rebooting. The judgement calls, suspend and make-functional, stay on the firewall. That division is why the Panorama path still needs someone watching each pair rather than one big OK button.</p></div>
+<div class="note"><p>Step 6 is the failover test, exactly as in the CLI path. If traffic does not recover when you suspend the active peer, make it functional again and stop &mdash; at that point only one peer has been upgraded and you can still walk away cleanly.</p></div>
+</section>
+
+    <section class="topic" id="pano-offline" data-group="Panorama GUI" data-tag="AIR-GAPPED">
+  <div class="topic-head"><span class="eyebrow">Panorama GUI</span><span class="tag">AIR-GAPPED</span>
+    <h2>When Panorama Has No Internet Access</h2></div>
+<p>The deployment steps are identical; only the source of the image changes. Instead of Check Now and Download, you upload the files to Panorama first.</p>
+<ol class="steps">
+<li>On a machine with internet access, download the PAN-OS image for each firewall <b>model</b> you are upgrading from the Palo Alto Networks support portal. Model-specific &mdash; a 3400 image will not deploy to a 5400.</li>
+<li>Download the base image too, if your target is a hotfix.</li>
+<li>Download the content release files you need.</li>
+<li>In Panorama, <b>Panorama &rarr; Device Deployment &rarr; Software &rarr; Upload</b> and select each image file.</li>
+<li>Same for content: <b>Panorama &rarr; Device Deployment &rarr; Dynamic Updates &rarr; Upload</b>.</li>
+<li>Deploy exactly as in <a href="#pano-ha-sequence">HA Pairs From Panorama</a> &mdash; Install, Group HA Peers cleared, Reboot device after install selected.</li>
+</ol>
+<div class="warn"><p>Upload everything for every model and every hop <b>before</b> the window opens. Discovering a missing base image with a peer already suspended is a bad place to be, and downloading a 1.2GB file from the support portal at that moment is not a fast recovery.</p></div>
+</section>
+
+    <!-- ---------- GROUP: Post-Upgrade ---------- -->
+
+    <section class="topic" id="post-validation" data-group="Post-Upgrade" data-tag="VALIDATION">
+  <div class="topic-head"><span class="eyebrow">Post-Upgrade</span><span class="tag">VALIDATION</span>
+    <h2>Validation — Compare Against Your Baseline</h2></div>
+<div class="kid"><p>Compare today&rsquo;s photo of your room with yesterday&rsquo;s. Anything missing? Find it now, not next week.</p></div>
+<pre class="cli">admin@fw-01(active)&gt; <b>show system info | match "sw-version|app-version|threat-version"</b>  <i>PAN-OS version plus the two content versions</i>
+admin@fw-01(active)&gt; <b>show chassis-ready</b>                                       <i>is the DATAPLANE up — 'yes' means it can pass traffic, not just answer SSH</i>
+admin@fw-01(active)&gt; <b>show high-availability state</b>                             <i>the main HA summary — roles, sync status, link health</i>
+admin@fw-01(active)&gt; <b>show high-availability all</b>                               <i>full HA detail — use this when something looks wrong</i>
+admin@fw-01(active)&gt; <b>show session info</b>                                        <i>session count and how full the session table is</i>
+admin@fw-01(active)&gt; <b>show session all</b>                                         <i>list live sessions — proof the box is actually passing traffic</i>
+admin@fw-01(active)&gt; <b>show interface all</b>                                       <i>every interface and whether it is up — compare to your baseline</i>
+admin@fw-01(active)&gt; <b>show routing route</b>                                       <i>the routing table — confirm neighbours came back after reboot</i>
+admin@fw-01(active)&gt; <b>show vpn ike-sa</b>                                          <i>IPsec phase 1 — are tunnels negotiating</i>
+admin@fw-01(active)&gt; <b>show vpn ipsec-sa</b>                                        <i>IPsec phase 2 — are tunnels actually passing data</i>
+admin@fw-01(active)&gt; <b>show system resources</b>                                    <i>live CPU and memory, like top on Linux</i>
+admin@fw-01(active)&gt; <b>show counter global filter severity drop</b>                 <i>global drop counters — what the firewall is discarding and why</i>
+admin@fw-01(active)&gt; <b>show log system direction equal backward</b>                 <i>newest system log entries first</i></pre>
+<div class="tbl"><table><thead><tr><th>Check</th><th>Pass condition</th></tr></thead><tbody>
+<tr><td>sw-version</td><td>Matches the target, on both peers.</td></tr>
+<tr><td>chassis-ready</td><td>yes.</td></tr>
+<tr><td>HA state</td><td>One active, one passive (or both active in A/A). Config synchronized.</td></tr>
+<tr><td>Session count</td><td>In the same ballpark as your baseline, and climbing.</td></tr>
+<tr><td>Interfaces</td><td>Same set up as before. A missing link is a hardware or config problem, not a fluke.</td></tr>
+<tr><td>Routing / VPN</td><td>Neighbours re-established, tunnels re-keyed.</td></tr>
+<tr><td>System log</td><td>No repeating errors, no process restarts.</td></tr>
+<tr><td>Preemption</td><td>Back to whatever it was before you started.</td></tr>
+</tbody></table></div>
+<div class="gui"><ul><li>Version: Dashboard &rarr; General Information. HA: Dashboard &rarr; High Availability widget.</li><li>Sessions: Monitor &rarr; <b>Traffic</b> (new entries arriving). Errors: Monitor &rarr; Logs &rarr; <b>System</b>.</li><li>Routing: Network &rarr; Virtual Routers &rarr; <b>More Runtime Stats</b> (Advanced Routing: Network &rarr; Routing &rarr; Logical Routers &rarr; More Runtime Stats).</li><li>VPN: Network &rarr; <b>IPSec Tunnels</b> &mdash; status lights green.</li></ul></div>
+</section>
+
+    <section class="topic" id="ha2-counters" data-group="Post-Upgrade" data-tag="SESSION SYNC">
+  <div class="topic-head"><span class="eyebrow">Post-Upgrade</span><span class="tag">SESSION SYNC</span>
+    <h2>Confirming Session Sync Actually Resumed</h2></div>
+<div class="kid"><p>Are the friends still passing notes? Count the notes. If the count does not go up, they stopped talking.</p></div>
+<p>HA can report healthy while session synchronisation is silently dead. The HA2 interface counters are the proof.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show high-availability interface ha2</b>          <i>HA2 counters — proof session sync is actually running</i>
+<i>check the CPU table hardware interface counters are incrementing</i>
+
+admin@fw-01(active)&gt; <b>show high-availability state-synchronization</b>  <i>session-sync statistics between the peers</i></pre>
+<div class="tbl"><table><thead><tr><th>Configuration</th><th>Expected counter behaviour</th></tr></thead><tbody>
+<tr><td>Active/passive — active peer</td><td>Packets transmitted increasing.</td></tr>
+<tr><td>Active/passive — passive peer</td><td>Packets received only.</td></tr>
+<tr><td>Active/passive with HA2 keep-alive</td><td>Both transmit and receive on the passive peer — keep-alive is bidirectional.</td></tr>
+<tr><td>Active/active — both peers</td><td>Both transmit and receive.</td></tr>
+</tbody></table></div>
+<div class="note"><p>If HA2 counters are flat, the next failover will drop every established session. This check costs thirty seconds and is skipped in most upgrade runbooks.</p></div>
+<div class="gui"><ul><li>No GUI equivalent for HA2 hardware counters &mdash; this one is CLI only.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: Rollback ---------- -->
+
+    <section class="topic" id="rollback-maintenance" data-group="Rollback" data-tag="ROLLBACK">
+  <div class="topic-head"><span class="eyebrow">Rollback</span><span class="tag">ROLLBACK</span>
+    <h2>Reverting to a Previous Maintenance Release</h2></div>
+<div class="kid"><p>Going back one small step on the same staircase is easy &mdash; the old shoes are still by the door.</p></div>
+<p>Same feature release, earlier maintenance or hotfix — for example 11.1.4-h13 back to 11.1.4-h7. This is the easy case: the firewall keeps an automatic configuration snapshot from before the upgrade and restores it on the way down.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>request system software info</b>                             <i>list versions available to download, with a Downloaded flag</i>
+<i>confirm the older version is still present on disk</i>
+
+admin@fw-01(active)&gt; <b>request system software install version &lt;previous-version&gt;</b>  <i>install the older image to roll back — still needs a reboot</i>
+admin@fw-01(active)&gt; <b>show jobs id &lt;jobid&gt;</b>                                     <i>poll one job — wait for Status FIN and Result OK</i>
+admin@fw-01(active)&gt; <b>request restart system</b>                                   <i>reboot NOW — no confirmation, no grace period</i>
+
+<i>after reboot:</i>
+admin@fw-01(active)&gt; <b>show system info | match sw-version</b>                      <i>just the running PAN-OS version</i>
+admin@fw-01(active)&gt; <b>show chassis-ready</b>                                       <i>is the DATAPLANE up — 'yes' means it can pass traffic, not just answer SSH</i></pre>
+<div class="note"><p>In an HA pair, roll back the same way you upgraded: suspend, install, reboot, functional, one peer at a time. Do not roll back both simultaneously — that is a full outage and it gives you nothing.</p></div>
+<div class="gui"><ul><li>Device &rarr; Software &rarr; <b>Install</b> on the previous version (still Downloaded) &rarr; Reboot. HA: one peer at a time, as for the upgrade.</li></ul></div>
+</section>
+
+    <section class="topic" id="rollback-feature" data-group="Rollback" data-tag="DOWNGRADE">
+  <div class="topic-head"><span class="eyebrow">Rollback</span><span class="tag">DOWNGRADE</span>
+    <h2>Downgrading Across a Feature Release</h2></div>
+<div class="kid"><p>Going back a whole floor means walking down every stair &mdash; and bringing your old rucksack (the config you exported) with you.</p></div>
+<p>Dropping from 11.1 back to 10.2 is a different animal. Configuration introduced by the newer release has no meaning on the older one, so the automatic snapshot may not be usable.</p>
+<ul>
+<li>You must downgrade through each feature release in reverse — the same staircase, going down.</li>
+<li>Restore the <b>pre-upgrade</b> configuration you exported, not the current running config.</li>
+<li>HA peers still cannot sit more than one feature release apart while you do it.</li>
+<li>Content versions may need downgrading too if the newer content is incompatible with the older PAN-OS.</li>
+</ul>
+<pre class="cli"><i>Load the config you exported before the upgrade:</i>
+admin@fw-01&gt; <b>scp import configuration from user@10.20.30.40:/backups/fw-01-pre.xml</b>  <i>copy a saved config file back ONTO the firewall</i>
+admin@fw-01&gt; <b>configure</b>                                                        <i>enter configuration mode — the prompt changes from > to #</i>
+admin@fw-01# <b>load config from fw-01-pre.xml</b>                                   <i>load that file into the candidate config — still needs a commit</i>
+admin@fw-01# <b>commit</b>                                                           <i>apply the candidate config — nothing above is live until this runs</i>
+admin@fw-01# <b>exit</b>                                                             <i>leave configuration mode, back to the > prompt</i></pre>
+<div class="warn"><p>This is why the off-box export in <a href="#config-backup">Backup</a> is not optional. A cross-release downgrade without the original configuration file means rebuilding by hand under pressure. If you are seriously considering a feature-release downgrade during a change window, open a TAC case first.</p></div>
+<div class="gui"><ul><li>Device &rarr; Setup &rarr; Operations &rarr; <b>Import named configuration snapshot</b> (your pre-upgrade export) &rarr; <b>Load named configuration snapshot</b> &rarr; Commit.</li><li>Installing an older feature release from Device &rarr; Software prompts you to pick the configuration to load &mdash; pick the pre-upgrade export.</li></ul></div>
+</section>
+
+    <!-- ---------- GROUP: Disk Space ---------- -->
+
+    <section class="topic" id="disk-check" data-group="Disk Space" data-tag="PRE-FLIGHT">
+  <div class="topic-head"><span class="eyebrow">Disk Space</span><span class="tag">PRE-FLIGHT</span>
+    <h2>Check Disk Space Before You Download Anything</h2></div>
+<div class="kid"><p>You cannot put a new toy in a full cupboard. Look inside the cupboard first.</p></div>
+<p>Insufficient disk is one of the most common reasons an upgrade stalls, and it always announces itself at the least convenient moment &mdash; usually after a 1.2GB download has run for fifteen minutes. Thirty seconds up front avoids it.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show system disk-space</b>  <i>free space per partition — run this BEFORE downloading anything</i>
+<u>Filesystem      Size  Used Avail Use% Mounted on</u>
+<u>/dev/root       3.8G  3.1G  581M  85% /</u>
+<u>/dev/sda5       7.6G  4.2G  3.0G  59% /opt/pancfg</u>
+<u>/dev/sda6       3.8G  3.0G  666M  82% /opt/panrepo</u>
+<u>/dev/sda8        88G  2.4G   81G   3% /opt/panlogs</u></pre>
+<div class="tbl"><table><thead><tr><th>Partition</th><th>Holds</th><th>Matters because</th></tr></thead><tbody>
+<tr><td>/opt/panrepo</td><td>PAN-OS software images</td><td>Where your upgrade image lands. Full = download fails.</td></tr>
+<tr><td>/opt/pancfg</td><td>Config, saved snapshots, dynamic content</td><td><b>Blocks downloads at 90% regardless of free bytes.</b> See below.</td></tr>
+<tr><td>/ (root)</td><td>System files, debug logs, packet captures</td><td>Not used for operational storage, but a full root breaks upgrades and packet captures.</td></tr>
+<tr><td>/opt/panlogs</td><td>Traffic, threat and system logs</td><td>Usually huge and rarely the problem. Clearing logs will not help panrepo.</td></tr>
+</tbody></table></div>
+<div class="warn"><p><b>The 90% rule on /opt/pancfg catches everyone.</b> PAN-OS runs a strict percentage check &mdash; at 90% or above, downloads fail <mark>even with gigabytes free</mark>. You can be staring at 1.4GB available and still be refused. Get pancfg below 90%, not merely "roomy".</p></div>
+<p>To see what is sitting on the box beyond the partition totals:</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show system files</b>                  <i>files on the box, including core dumps — press ? after "files" to see what your release offers</i></pre>
+<div class="note"><p>Add <code>show system disk-space</code> to your <a href="#change-window">pre-change checklist</a> and run it on <b>both</b> peers. They fill at different rates &mdash; the active peer generates far more log and report data than the passive one.</p></div>
+<div class="gui"><ul><li>No partition view in the GUI &mdash; <code>show system disk-space</code> is CLI only. Cleanup of images and content <i>is</i> in the GUI (Device &rarr; Software and Dynamic Updates &rarr; X).</li></ul></div>
+</section>
+
+    <section class="topic" id="disk-cleanup-images" data-group="Disk Space" data-tag="CLEANUP">
+  <div class="topic-head"><span class="eyebrow">Disk Space</span><span class="tag">CLEANUP</span>
+    <h2>Deleting Old Software Images</h2></div>
+<div class="kid"><p>Throw out old toys &mdash; but never the one you are playing with, and never its box.</p></div>
+<p>Old PAN-OS images live in <code>/opt/panrepo</code> and are usually the biggest easy win &mdash; each one is roughly a gigabyte and most firewalls accumulate several.</p>
+<pre class="cli"><i>1. List what is actually on the box:</i>
+admin@fw-01(active)&gt; <b>debug swm list</b>                      <i>which PAN-OS images are sitting on the disk right now</i>
+<u>Product   B  Version        Built                 Loaded</u>
+<u>panos        11.1.0-c797    2024-05-11 00:52:43   2025-05-11 14:12:28</u>
+<u>panos        11.1.4-h7      ...</u>
+<u>panos        11.1.10        ...</u>
+
+<i>2. Delete the ones you no longer need:</i>
+admin@fw-01(active)&gt; <b>delete software version 11.1.10</b>     <i>remove an old image — never the running version or its base image</i>
+admin@fw-01(active)&gt; <b>delete software version 11.1.4-h13</b>  <i>remove an old image — never the running version or its base image</i>
+admin@fw-01(active)&gt; <b>delete software version 11.1.4-h7</b>   <i>remove an old image — never the running version or its base image</i>
+
+<i>3. Confirm the space came back:</i>
+admin@fw-01(active)&gt; <b>show system disk-space</b>              <i>free space per partition — run this BEFORE downloading anything</i></pre>
+<div class="warn"><p><b>Two images you must not delete.</b> The version currently running, and <mark>its base image</mark>. If you are on <code>11.1.4-h13</code>, then <code>11.1.0</code> stays. The GUI protects you here &mdash; it simply will not offer an X on those rows. The CLI is less forgiving. Cross-check <code>debug swm list</code> against <code>show system info | match sw-version</code> before you delete anything.</p></div>
+<div class="warn"><p>Do not delete the <b>base image of the version you are about to install</b> either. Deleting <code>11.1.0</code> to make room for <code>11.1.4-h13</code> means the install will be rejected for a missing base image, and you will re-download the very file you just removed. See <a href="#upgrade-path">The Upgrade Path</a>.</p></div>
+<h3>Stop it happening again</h3>
+<pre class="cli"><i>Operational mode (&gt;) — not configure, no commit:</i>
+admin@fw-01(active)&gt; <b>show max-num-images</b>         <i>how many images of each type are kept today</i>
+admin@fw-01(active)&gt; <b>set max-num-images count 2</b>  <i>keep only 2 — range 2 to 64 — older ones are pruned automatically</i></pre>
+<p>This caps how many images PAN-OS retains, so old versions are pruned automatically rather than accumulating until an upgrade fails.</p>
+<p><b>GUI:</b> Device &rarr; Software &rarr; click the <b>X</b> at the right of any row you want removed. On Panorama, the same applies at Panorama &rarr; Software (its own images) and Panorama &rarr; Device Deployment &rarr; Software (images staged for managed firewalls) &mdash; the second of those is frequently the real culprit on a Panorama with a full disk.</p>
+</section>
+
+    <section class="topic" id="disk-cleanup-content" data-group="Disk Space" data-tag="CLEANUP">
+  <div class="topic-head"><span class="eyebrow">Disk Space</span><span class="tag">CLEANUP</span>
+    <h2>Deleting Old Content and Configuration Files</h2></div>
+<p>Dynamic content accumulates the same way images do, and it lands on <code>/opt/pancfg</code> &mdash; the partition with the 90% cliff.</p>
+<pre class="cli"><i>Tab after "update" to list what is present, then delete the oldest:</i>
+admin@fw-01(active)&gt; <b>delete anti-virus update panup-all-antivirus-5649-6176</b>  <i>remove one old antivirus content file — only the installed one matters</i>
+admin@fw-01(active)&gt; <b>delete anti-virus update panup-all-antivirus-5650-6177</b>  <i>remove one old antivirus content file</i>
+admin@fw-01(active)&gt; <b>delete anti-virus update panup-all-antivirus-5651-6178</b>  <i>remove one old antivirus content file</i>
+
+admin@fw-01(active)&gt; <b>delete content update &lt;filename&gt;</b>                        <i>remove an old App and Threat content file</i>
+admin@fw-01(active)&gt; <b>delete wildfire update &lt;filename&gt;</b>                       <i>remove an old WildFire content file</i></pre>
+<div class="note"><p>Antivirus content updates daily, so a firewall that has been up for a year may be holding hundreds of these. They are the quietest disk consumer on the box and the safest thing to delete &mdash; only the currently installed version matters.</p></div>
+<h3>Saved configuration snapshots</h3>
+<p>Every <code>save config to</code> leaves a file behind. Runbooks that name snapshots by date build up years of them.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>show config saved</b>          <i>list what exists</i>
+admin@fw-01(active)&gt; <b>delete config saved &lt;filename&gt;</b>  <i>remove an old configuration snapshot</i></pre>
+<h3>Other reclaimable files</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>delete core file &lt;filename&gt;</b>       <i>process crash dumps</i>
+admin@fw-01(active)&gt; <b>delete debug-log &lt;filename&gt;</b>        <i>rotated .old debug logs — frees root</i>
+admin@fw-01(active)&gt; <b>delete debug-filter file &lt;filename&gt;</b>  <i>remove a saved debug filter file</i>
+admin@fw-01(active)&gt; <b>delete pcap directory &lt;name&gt;</b>       <i>forgotten packet captures</i>
+admin@fw-01(active)&gt; <b>delete report ...</b>                   <i>custom or predefined reports</i></pre>
+<div class="warn"><p>Old tech-support files and packet captures are a classic hidden consumer. Someone captures traffic to troubleshoot, gets their answer, and the pcap sits on the root partition for two years. <code>show system files</code> will surface them.</p></div>
+<p><b>GUI:</b> Device &rarr; Dynamic Updates &rarr; the <b>X</b> on old Antivirus, Applications and Threats, and WildFire entries. Device &rarr; Setup &rarr; Operations for saved configuration snapshots.</p>
+</section>
+
+    <section class="topic" id="disk-cleanup-logs" data-group="Disk Space" data-tag="CLEANUP">
+  <div class="topic-head"><span class="eyebrow">Disk Space</span><span class="tag">CLEANUP</span>
+    <h2>Logs, Automatic Cleanup and Quotas</h2></div>
+<p>Logs are the last thing to reach for, not the first &mdash; they are your evidence trail, and they usually live on a partition that was not the problem anyway.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>clear log system</b>   <i>WIPE the system log — destructive, and it frees panlogs, not panrepo</i>
+admin@fw-01(active)&gt; <b>clear log traffic</b>  <i>WIPE the traffic log — you lose the audit trail</i>
+admin@fw-01(active)&gt; <b>clear log threat</b>   <i>WIPE the threat log — you lose the audit trail</i></pre>
+<div class="warn"><p><b>Clearing logs is destructive and usually solves the wrong problem.</b> Logs sit on <code>/opt/panlogs</code>, which is typically the emptiest partition on the box. If <code>/opt/panrepo</code> is full, clearing the system log frees nothing useful &mdash; deleting old images is what fixes it. Check <code>show system disk-space</code> first and clear the partition that is actually full.</p></div>
+<h3>Built-in cleanup</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>debug software disk-usage cleanup deep threshold 90</b>  <i>run the built-in cleanup at 90% instead of the 95% default — not persistent</i></pre>
+<p>Runs the internal cleanup routine at a lower threshold than the 95% default. It is <b>not persistent across reboots</b> and must be re-run each time. It may remove backup log files, so it can cost you data you wanted for analysis.</p>
+<h3>Quotas &mdash; the durable fix</h3>
+<pre class="cli">admin@fw-01(active)&gt; <b>show system logdb-quota</b>  <i>how much space each log type is allowed to consume</i></pre>
+<p><b>GUI:</b> Device &rarr; Setup &rarr; Management &rarr; <b>Logging and Reporting Settings</b>. Reducing quotas is a real fix; clearing logs is a one-off that buys you until next month.</p>
+<div class="note"><p><b>Alert on it.</b> The firewall writes a system log entry along the lines of <i>Disk usage for / exceeds limit, 95 percent in use, cleaning filesystem</i>. If you forward syslog, build an alert on that string &mdash; then disk pressure reaches you weeks before it reaches an upgrade window.</p></div>
+<div class="warn"><p>Some partitions cannot be cleaned from the CLI at all, because the files need root access. If <code>show system disk-space</code> shows a partition full and nothing above touches it, that is a TAC case, not a puzzle to solve with clever commands. Do not go looking for a root shell.</p></div>
+</section>
+
+    <section class="topic" id="disk-field-case" data-group="Disk Space" data-tag="FIELD CASE">
+  <div class="topic-head"><span class="eyebrow">Disk Space</span><span class="tag">FIELD CASE</span>
+    <h2>Field Case &mdash; panrepo at 80%, Install Blocked</h2></div>
+<p>An upgrade that would not proceed because <code>/opt/panrepo</code> had no room for the target image. What actually cleared it, in order:</p>
+<pre class="cli"><i>1. Old antivirus content — frees /opt/pancfg:</i>
+&gt; <b>delete anti-virus update panup-all-antivirus-5649-6176</b>  <i>remove one old antivirus content file — only the installed one matters</i>
+&gt; <b>delete anti-virus update panup-all-antivirus-5650-6177</b>  <i>remove one old antivirus content file</i>
+&gt; <b>delete anti-virus update panup-all-antivirus-5651-6178</b>  <i>remove one old antivirus content file</i>
+&gt; <b>delete anti-virus update panup-all-antivirus-5653-6180</b>  <i>remove one old antivirus content file</i>
+
+<i>2. Cached system event logs — frees /opt/panlogs:</i>
+&gt; <b>clear log system</b>                                        <i>WIPE the system log — destructive, and it frees panlogs, not panrepo</i>
+
+<i>3. Old software images — frees /opt/panrepo, and this is what unblocked it:</i>
+&gt; <b>delete software version 11.1.10</b>                         <i>remove an old image — never the running version or its base image</i>
+&gt; <b>delete software version 11.1.4-h13</b>                      <i>remove an old image — never the running version or its base image</i>
+&gt; <b>delete software version 11.1.4-h7</b>                       <i>remove an old image — never the running version or its base image</i>
+
+&gt; <b>show system disk-space</b>                                  <i>free space per partition — run this BEFORE downloading anything</i>
+<u>/opt/panrepo utilisation 80% -> 46%, roughly 4.1 GB reclaimed</u></pre>
+<div class="note"><p><b>Which step did the work.</b> Step 3 is the one that fixed the blocked install &mdash; images and panrepo are the same partition. Step 1 helped a different partition that also benefits from headroom. Step 2 freed panlogs, which was almost certainly not the constraint. Worth knowing, because next time you can go straight to <code>delete software version</code> and keep your system log intact.</p></div>
+<div class="warn"><p>Before repeating this, check <code>show system info | match sw-version</code> and confirm you are not deleting the running version or its base image. In this case the box was running a 10.2 release, so removing 11.1 images was safe. On a firewall already running 11.1.4-h13, <code>delete software version 11.1.4-h13</code> would be deleting the version underneath itself.</p></div>
+</section>
+
+    <!-- ---------- GROUP: Upgrade Failures ---------- -->
+
+    <section class="topic" id="tshoot-download" data-group="Upgrade Failures" data-tag="DOWNLOAD">
+  <div class="topic-head"><span class="eyebrow">Upgrade Failures</span><span class="tag">DOWNLOAD</span>
+    <h2>Download and Install Failures</h2></div>
+<div class="tbl"><table><thead><tr><th>Error or symptom</th><th>Cause and fix</th></tr></thead><tbody>
+<tr><td><i>There is not enough free disk space to complete the desired operation</i></td><td>Exactly what it says. <code>show system disk-space</code>, then <a href="#disk-cleanup-images">delete old images</a>. Remember the 90% rule on pancfg.</td></tr>
+<tr><td>Download job sits at ACT forever</td><td>No route or DNS to the update servers from the management interface. Test with <code>ping source &lt;mgmt-ip&gt; host updates.paloaltonetworks.com</code>, and check the service route for <b>Palo Alto Networks Services</b>.</td></tr>
+<tr><td>Download fails immediately, repeatedly</td><td>Stale image list. <code>request system software check</code> to refresh, then retry. Also check licence and support entitlement &mdash; an expired support contract blocks software downloads outright.</td></tr>
+<tr><td>Target version not listed</td><td>More than one feature release away. See <a href="#upgrade-path">The Upgrade Path</a>.</td></tr>
+<tr><td>Install rejected, base image missing</td><td>Download the base release, install nothing from it, retry the target.</td></tr>
+<tr><td>Install job FIN/FAIL</td><td>Read the job details: <code>show jobs id &lt;jobid&gt;</code>. Usually disk, a corrupt download, or a failed pre-check. Delete and re-download the image before retrying.</td></tr>
+<tr><td>Content install fails but download succeeded</td><td>pancfg near the 90% line. Clear old content, then reinstall.</td></tr>
+</tbody></table></div>
+<div class="note"><p>A corrupt image is a real possibility on a flaky management link. <code>delete software version &lt;target&gt;</code> then download again &mdash; retrying the install against the same broken file will fail the same way every time.</p></div>
+</section>
+
+    <section class="topic" id="tshoot-boot" data-group="Upgrade Failures" data-tag="POST-REBOOT">
+  <div class="topic-head"><span class="eyebrow">Upgrade Failures</span><span class="tag">POST-REBOOT</span>
+    <h2>It Rebooted and Something Is Wrong</h2></div>
+<div class="tbl"><table><thead><tr><th>Symptom</th><th>What to do</th></tr></thead><tbody>
+<tr><td>Never comes back at all</td><td>Console access. Boot messages tell you far more than a dead SSH session. This is why <a href="#remote-access-dataplane">out-of-band access</a> is first on the list.</td></tr>
+<tr><td>SSH answers but no traffic passes</td><td><code>show chassis-ready</code>. If it returns no, the dataplane is still coming up &mdash; wait. If it stays no, check <code>show system software status</code> and the system log.</td></tr>
+<tr><td>Still on the old version</td><td>The install job did not complete before the reboot. Re-run <code>request system software install version &lt;target&gt;</code> and wait for FIN/OK this time.</td></tr>
+<tr><td>Interfaces down that were up before</td><td>Compare against your <a href="#version-capture">baseline capture</a>. Check the release notes for changes to default behaviour &mdash; interface or link-speed defaults do occasionally change between releases.</td></tr>
+<tr><td>Processes restarting in a loop</td><td><code>show system software status</code>, then the system log. Grab a tech-support file and open a TAC case rather than rebooting repeatedly.</td></tr>
+<tr><td>Certificates rejected after upgrade</td><td>PAN-OS 11.1 and later enforce OpenSSL Security Level 2 &mdash; RSA 2048 / ECDSA 256 minimum, SHA256 digest or better. Weak certificates must be regenerated or re-imported.</td></tr>
+<tr><td>Config partly missing</td><td>Do <b>not</b> commit anything. Load your pre-upgrade export: <code>load config from &lt;file&gt;</code>, review, then commit.</td></tr>
+</tbody></table></div>
+<div class="warn"><p>When a firewall is misbehaving after an upgrade, the instinct is to reboot it again. Resist that. Each reboot destroys volatile state that TAC would use to diagnose the problem, and if a process is crash-looping, another reboot changes nothing. Capture a tech-support file <b>first</b>.</p></div>
+</section>
+
+    <section class="topic" id="tshoot-ha-failures" data-group="Upgrade Failures" data-tag="HA">
+  <div class="topic-head"><span class="eyebrow">Upgrade Failures</span><span class="tag">HA</span>
+    <h2>HA Problems During and After Upgrade</h2></div>
+<div class="tbl"><table><thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead><tbody>
+<tr><td><i>Peer version too old</i>, peer suspends itself</td><td>Peers are two or more feature releases apart. Bring the lagging peer up one release. Unavoidable if you skipped a hop &mdash; you must finish the staircase.</td></tr>
+<tr><td>Both peers active after reboot</td><td>Split brain from an HA1 control link failure. <code>show high-availability all</code> and check HA1, HA1-backup and heartbeat backup. Restore the control link, then suspend the peer that should <i>not</i> be active and make it functional again once HA1 is up.</td></tr>
+<tr><td>Failover fired mid-upgrade</td><td>Preemption was never actually disabled, or the commit silently failed. <code>show high-availability state | match Preempt</code>. This is why the commit must be confirmed before you proceed.</td></tr>
+<tr><td>Config out-of-sync after both peers upgraded</td><td>From the peer you trust: <code>request high-availability sync-to-remote running-config</code>. Direction matters &mdash; see <a href="#force-sync">Force a Config Sync</a>.</td></tr>
+<tr><td>Upgraded peer will not go passive</td><td>It is still suspended. <code>request high-availability state functional</code>. If it refuses, check <code>show chassis-ready</code> first &mdash; a peer with a dataplane that is not up cannot become functional.</td></tr>
+<tr><td>Sessions drop on every failover afterwards</td><td>HA2 session sync is not running. <code>show high-availability interface ha2</code> and confirm the counters increment. See <a href="#ha2-counters">Confirming Session Sync</a>.</td></tr>
+<tr><td>Pair never fails back</td><td>Preemption left disabled after the window. Re-enable and commit.</td></tr>
+<tr><td>HA links flapping post-upgrade</td><td>Link or path monitoring was re-enabled while the dataplane was still settling. Confirm <code>show chassis-ready</code> on both, then re-check <code>show high-availability path-monitoring</code>.</td></tr>
+</tbody></table></div>
+<div class="human"><p>Nearly every HA problem in this table traces back to one of three things: the peers are too far apart in version, something that should have been disabled was not, or something that should have been re-enabled was not. Check those three before reaching for anything clever.</p></div>
+</section>
+
+    <!-- ---------- GROUP: Field Reference ---------- -->
+
+    <section class="topic" id="syntax-corrections" data-group="Field Reference" data-tag="CORRECTIONS">
+  <div class="topic-head"><span class="eyebrow">Field Reference</span><span class="tag">CORRECTIONS</span>
+    <h2>Commands That Are Wrong in Most Circulating Runbooks</h2></div>
+<p>These forms appear constantly in shared documents and internal wikis. They are legacy, mistyped, or environment-dependent. Verified against the current PAN-OS CLI reference.</p>
+<div class="tbl"><table><thead><tr><th>Commonly written</th><th>Correct form / note</th></tr></thead><tbody>
+<tr><td>set ... high-availability group group-id 1 election-option preemptive no</td><td>Drop the group ID: <code>set deviceconfig high-availability group election-option preemptive no</code>. Since PAN-OS 7.0 the HA <b>group</b> node is a singleton; <code>group-id</code> is a value you set <i>under</i> it, not an index. The old numbered form is PAN-OS 6.x and earlier.</td></tr>
+<tr><td>show job id &lt;jobid&gt;</td><td><code>show jobs id &lt;jobid&gt;</code> — plural.</td></tr>
+<tr><td>request wildfire upgrade download latest</td><td>Valid, but errors with <i>There is not wildfire license on the box</i> without the subscription. Skip it rather than treating the error as a fault.</td></tr>
+<tr><td>request system software check (to list downloadables)</td><td><code>check</code> refreshes and shows what is loaded on the firewall; <code>request system software info</code> is the one that lists versions available for download with their Downloaded flag.</td></tr>
+<tr><td>Install content, then assume HA syncs it</td><td>Content is <b>not</b> synchronised by HA. Install on both peers explicitly.</td></tr>
+<tr><td>Disable preemption on both peers</td><td>One peer is sufficient per Palo Alto's procedure. Both is harmless; the failure mode is doing neither and assuming.</td></tr>
+<tr><td>Reboot immediately after the install command returns</td><td>The command returns a job ID, not a result. Wait for <code>show jobs id</code> to report FIN/OK.</td></tr>
+<tr><td>SSH answers, therefore the upgrade is done</td><td>Management plane comes up first. Gate on <code>show chassis-ready</code> = yes.</td></tr>
+<tr><td>configure &rarr; set max-num-images count 2 &rarr; commit</td><td><code>set max-num-images count &lt;2-64&gt;</code> is an <b>operational-mode</b> command. No configure, no commit. Check with <code>show max-num-images</code>.</td></tr>
+<tr><td>request high-availability sessions-reestablish force (to fix split brain)</td><td>Removed from this runbook &mdash; not a documented split-brain fix. Restore HA1 / HA1-backup, then suspend and re-functional the wrong active peer.</td></tr>
+<tr><td>"You can never skip a feature release"</td><td>Outdated. Skip Software Version (10.1 and later) allows direct jumps, e.g. 11.x &rarr; 12.1 on standalone and Panorama-managed firewalls. HA pairs: see <a href="#go-12">Going to 12.1</a>.</td></tr>
+</tbody></table></div>
+</section>
+
+    <section class="topic" id="field-transcript" data-group="Field Reference" data-tag="REAL RUN">
+  <div class="topic-head"><span class="eyebrow">Field Reference</span><span class="tag">REAL RUN</span>
+    <h2>Transcript — A 10.2.4-h32 to 10.2.13-h3 Pair</h2></div>
+<div class="note"><p>This transcript is a 10.2 run, kept because it is real. The commands, prompts and job behaviour are identical on 11.x and 12.1 &mdash; only the version strings change.</p></div>
+<p>Edited from a real maintenance window on a PA-3410 active/passive pair. Hostnames and addresses are generic; the job IDs, errors and ordering are as they happened.</p>
+<pre class="cli">admin@fw-01(active)&gt; <b>request system software download version 10.2.13-h3</b>  <i>pull the image onto the firewall — non-disruptive, do it early</i>
+<u>Download job enqueued with jobid 595</u>
+admin@fw-01(active)&gt; <b>request anti-virus upgrade download latest</b>           <i>fetch the newest antivirus signatures</i>
+<u>Download job enqueued with jobid 596</u>
+admin@fw-01(active)&gt; <b>request wildfire upgrade download latest</b>             <i>fetch WildFire signatures — errors harmlessly without the licence</i>
+<u>Server error : There is not wildfire license on the box</u>   <i>expected — no subscription</i>
+admin@fw-01(active)&gt; <b>request content upgrade download latest</b>              <i>fetch the newest Applications and Threats content</i>
+<u>Download job enqueued with jobid 597</u>
+
+admin@fw-01(active)&gt; <b>show jobs id 595</b>                                     <i>poll that job until it reports FIN / OK</i>
+admin@fw-01(active)&gt; <b>show jobs id 596</b>                                     <i>poll that job until it reports FIN / OK</i>
+admin@fw-01(active)&gt; <b>show jobs id 597</b>                                     <i>poll that job until it reports FIN / OK</i></pre>
+<pre class="cli"><i>Same three downloads on the passive peer — separate job ID space per device:</i>
+admin@fw-02(passive)&gt; <b>request system software download version 10.2.13-h3</b>  <i>pull the image onto the firewall — non-disruptive, do it early</i>
+<u>Download job enqueued with jobid 326</u>
+admin@fw-02(passive)&gt; <b>request anti-virus upgrade download latest</b>           <i>fetch the newest antivirus signatures</i>
+<u>Download job enqueued with jobid 327</u>
+admin@fw-02(passive)&gt; <b>request content upgrade download latest</b>              <i>fetch the newest Applications and Threats content</i>
+<u>Download job enqueued with jobid 328</u></pre>
+<pre class="cli"><i>Tech-support and content install on the active:</i>
+admin@fw-01(active)&gt; <b>request tech-support dump</b>                          <i>generate the diagnostic bundle TAC will ask for — do it BEFORE the change</i>
+<u>Exec job enqueued with jobid 599</u>
+admin@fw-01(active)&gt; <b>request anti-virus upgrade install version latest</b>  <i>activate the antivirus signatures — no reboot needed</i>
+<u>Content install job enqueued with jobid 600</u>
+admin@fw-01(active)&gt; <b>request content upgrade install version latest</b>     <i>activate the App and Threat content — no reboot needed</i>
+<u>Content install job enqueued with jobid 601</u></pre>
+<pre class="cli"><i>Install on the suspended peer — note the confirmation prompt:</i>
+admin@fw-02(suspended)&gt; <b>request system software install version 10.2.13-h3</b>  <i>write the image to the spare partition — no effect until reboot</i>
+<u>Executing this command will install a new version of software. It will not take</u>
+<u>effect until system is restarted. Do you want to continue? (y or n)</u>
+<u>Software install job enqueued with jobid 332. Run 'show jobs id 332' to monitor</u>
+<u>its status. Please reboot the device after the installation is done.</u></pre>
+<div class="note"><p>Job IDs are per-device and unrelated between peers — 595 on one box and 326 on the other were the same operation. Track them per session, not globally, or you will poll the wrong job and conclude a download has stalled.</p></div>
+</section>
+
+    <section class="topic" id="symptom-index" data-group="Field Reference" data-tag="SYMPTOM INDEX">
+  <div class="topic-head"><span class="eyebrow">Field Reference</span><span class="tag">SYMPTOM INDEX</span>
+    <h2>Symptom → Cause → Command</h2></div>
+<div class="tbl"><table><thead><tr><th>Symptom</th><th>Likely cause and what to run</th></tr></thead><tbody>
+<tr><td>Target version not listed</td><td>More than one feature release away, or the list is stale. <code>request system software check</code> then <code>request system software info</code>.</td></tr>
+<tr><td>Install rejected</td><td>Base image missing for a hotfix target. Download the base release, then retry.</td></tr>
+<tr><td>Peer version too old</td><td>Peers are two or more feature releases apart. Bring the older peer up one release. <code>show high-availability state</code>.</td></tr>
+<tr><td>Download job stuck at ACT</td><td>No route or DNS to the update servers from the management interface. <code>ping source &lt;mgmt-ip&gt; host updates.paloaltonetworks.com</code>.</td></tr>
+<tr><td>Config out-of-sync after upgrade</td><td>Sync did not complete. From the correct peer: <code>request high-availability sync-to-remote running-config</code>.</td></tr>
+<tr><td>Both peers active (split brain)</td><td>HA1 control link down. <code>show high-availability all</code> and check HA1, HA1-backup and heartbeat backup. Restore the control link, then suspend the peer that should <i>not</i> be active and make it functional again once HA1 is up.</td></tr>
+<tr><td>Failover happened mid-upgrade</td><td>Preemption was never actually disabled, or the commit failed. <code>show high-availability state | match Preempt</code>.</td></tr>
+<tr><td>Traffic black-holing after reboot</td><td>Dataplane still initialising. <code>show chassis-ready</code>, then <code>show interface all</code>.</td></tr>
+<tr><td>Sessions dropped on failover</td><td>HA2 session sync not running. <code>show high-availability interface ha2</code>, check counters increment.</td></tr>
+<tr><td>App-ID behaving oddly post-upgrade</td><td>Content below the release's minimum. <code>show system info | match "app-version|threat-version"</code>.</td></tr>
+<tr><td>Pair never fails back</td><td>Preemption left disabled after the window. Re-enable and commit.</td></tr>
+</tbody></table></div>
+</section>
+
+    <section class="topic" id="commands-that-bite" data-group="Field Reference" data-tag="KNOW BEFORE YOU TYPE">
+  <div class="topic-head"><span class="eyebrow">Field Reference</span><span class="tag">KNOW BEFORE YOU TYPE</span>
+    <h2>Commands That Bite</h2></div>
+<div class="tbl"><table><thead><tr><th>Command</th><th>What actually happens</th></tr></thead><tbody>
+<tr><td>request restart system</td><td>Immediate reboot, no confirmation, no grace period. On a standalone firewall this is the outage starting right now.</td></tr>
+<tr><td>request high-availability state suspend</td><td>Removes the box from HA. Run it on the wrong peer and you have suspended the one carrying traffic while the other is mid-install.</td></tr>
+<tr><td>request high-availability sync-to-remote running-config</td><td>Overwrites the <b>peer's</b> running config with the local one. Direction is everything.</td></tr>
+<tr><td>request system software install</td><td>Writes to the alternate partition and marks it pending. Harmless until the reboot — but the next reboot for any reason will activate it.</td></tr>
+<tr><td>commit</td><td>On an HA pair with config sync enabled, pushes to the peer as well. There is no "just on this box" commit.</td></tr>
+<tr><td>set ... election-option preemptive yes</td><td>If the local box has higher priority, this can trigger an immediate failover on commit. Do it when you can tolerate one.</td></tr>
+<tr><td>request system private-data-reset</td><td>Wipes configuration and logs to factory state. Present in the same command tree. Never during an upgrade.</td></tr>
+<tr><td>load config from &lt;file&gt;</td><td>Replaces the candidate config wholesale. The following commit replaces everything, including anything changed since the file was taken.</td></tr>
+</tbody></table></div>
+</section>
+
+    <section class="topic" id="command-order" data-group="Field Reference" data-tag="COMMAND ORDER">
+  <div class="topic-head"><span class="eyebrow">Field Reference</span><span class="tag">COMMAND ORDER</span>
+    <h2>The Order That Works</h2></div>
+<h3>HA pair, active/passive, single feature-release hop</h3>
+<pre class="cli"><b>01.</b> show system info | match sw-version            <i>both peers — baseline</i>
+<b>02.</b> show high-availability state                   <i>both peers — must be in sync</i>
+<b>03.</b> save config to Pre_Upgrade_&lt;date&gt;.xml          <i>both peers</i>
+<b>04.</b> scp export configuration ...                   <i>both peers — off-box</i>
+<b>04b.</b> save device-state + scp export device-state <i>both peers — full bundle</i>
+<b>05.</b> request tech-support dump                      <i>both peers</i>
+<b>06.</b> request content upgrade download/install       <i>both peers</i>
+<b>07.</b> request system software download version ...   <i>both peers (or sync-to-peer yes)</i>
+<b>08.</b> show jobs id &lt;jobid&gt;                            <i>confirm FIN/OK before continuing</i>
+<b>09.</b> set ... election-option preemptive no + commit <i>one peer</i>
+<b>10.</b> request high-availability state suspend        <i>peer A — verify traffic on peer B</i>
+<b>11.</b> request system software install version ...    <i>peer A</i>
+<b>12.</b> request restart system                          <i>peer A</i>
+<b>13.</b> show chassis-ready                              <i>peer A — must be yes</i>
+<b>14.</b> request high-availability state functional     <i>peer A — wait for sync</i>
+<b>15.</b> repeat 10-14 on peer B
+<b>16.</b> set ... election-option preemptive yes + commit
+<b>17.</b> post-upgrade validation</pre>
+<h3>Standalone</h3>
+<pre class="cli"><b>01.</b> baseline capture
+<b>02.</b> save config + off-box export + tech-support
+<b>03.</b> content download and install
+<b>04.</b> request system software download version ...   <i>plus base image if hotfix</i>
+<b>05.</b> show jobs id &lt;jobid&gt;
+<b>06.</b> request system software install version ...
+<b>07.</b> show jobs id &lt;jobid&gt;                            <i>FIN/OK before rebooting</i>
+<b>08.</b> request restart system                          <i>the outage</i>
+<b>09.</b> show chassis-ready + validation</pre>
+<div class="human"><p>The pattern behind both lists: everything non-disruptive happens first and can be done days ahead. The window itself should contain nothing but suspend, reboot and verify.</p></div>
+</section>
+
+    <section class="topic" id="references" data-group="Field Reference" data-tag="SOURCES">
+  <div class="topic-head"><span class="eyebrow">Field Reference</span><span class="tag">SOURCES</span>
+    <h2>Sources and Further Reading</h2></div>
+<div class="tbl"><table><thead><tr><th>Source</th><th>Covers</th></tr></thead><tbody>
+<tr><td>PAN-OS Upgrade Guide — Upgrade an HA Firewall Pair</td><td>The documented manual and orchestrated HA procedures, and the peer-version-gap rule.</td></tr>
+<tr><td>PAN-OS Upgrade Guide — Use CLI Commands for Upgrade Tasks</td><td>Authoritative table of software, content and patch CLI commands.</td></tr>
+<tr><td>PAN-OS Upgrade Guide — Upgrade a Standalone Firewall</td><td>The non-HA path.</td></tr>
+<tr><td>PAN-OS Upgrade Guide — Determine the Upgrade Path</td><td>Feature-release hops and base image requirements.</td></tr>
+<tr><td>PAN-OS Upgrade Guide — Upgrade/Downgrade Considerations</td><td>Per-release behaviour changes worth reading before every hop.</td></tr>
+<tr><td>PAN-OS Upgrade Guide — Downgrade PAN-OS</td><td>Maintenance-release versus feature-release downgrade differences.</td></tr>
+<tr><td>PAN-OS Administrator's Guide — Reference: HA Synchronization</td><td>What syncs between peers and what does not.</td></tr>
+<tr><td>PAN-OS CLI Quick Start</td><td>Configuration-mode command tree, including the deviceconfig high-availability node.</td></tr>
+<tr><td>PAN-OS Release Notes (per version)</td><td>Minimum content version, known issues, changes to default behaviour.</td></tr>
+<tr><td>PAN-OS Upgrade Guide — Determine the Upgrade Path to 11.1 and later</td><td>Current path table, including direct 11.x &rarr; 12.1 via Skip Software Version.</td></tr>
+<tr><td>PAN-OS New Features — Skip Software Version Upgrade</td><td>Skip up to three releases on standalone and Panorama-managed firewalls from 10.1.</td></tr>
+<tr><td>Compatibility Matrix — Supported OS Releases by Model</td><td>Which hardware can run 12.x; 12.x support begins at 12.1.2.</td></tr>
+<tr><td>PAN-OS Admin Guide — HA Links and Backup Links</td><td>HA1, HA2, HA3, backups, ports and transports.</td></tr>
+<tr><td>Web Interface Help — HA Active/Active Config</td><td>HA3 Packet Forwarding, no HA3 backup, LAG and jumbo-frame requirements.</td></tr>
+<tr><td>Panorama Admin — Manage Panorama Storage for Software and Content Updates</td><td><code>set max-num-images count</code> and <code>show max-num-images</code>.</td></tr>
+<tr><td>Web Interface Help — Device &gt; Setup &gt; Operations</td><td>Export device state: contents, <code>save device-state</code>, <code>scp export device-state</code>.</td></tr>
+<tr><td>LIVEcommunity — Support PAN-OS Software Release Guidance</td><td>Currently preferred maintenance release per feature release.</td></tr>
+</tbody></table></div>
+<div class="note"><p>Commands in this guide were re-checked against Palo Alto TechDocs in September 2026 for 11.x &rarr; 12.1. CLI syntax does move between feature releases — when a command is rejected, <code>?</code> at any point in the tree shows what the box you are standing on actually accepts.</p></div>
+</section>
+
+    <div id="empty">No topic matches that search.</div>
+  </main>
+</div>
+
+<script>
+(function(){
+  const topics=[...document.querySelectorAll('section.topic')];
+  const nav=document.getElementById('nav');
+  const search=document.getElementById('search');
+  const count=document.getElementById('count');
+  const empty=document.getElementById('empty');
+
+  const groups=new Map();
+  topics.forEach(t=>{
+    const g=t.dataset.group||'Other';
+    if(!groups.has(g)) groups.set(g,[]);
+    groups.get(g).push(t);
+  });
+  groups.forEach((items,g)=>{
+    const h=document.createElement('h4'); h.textContent=g; nav.appendChild(h);
+    items.forEach(t=>{
+      const a=document.createElement('a');
+      a.href='#'+t.id;
+      a.textContent=t.querySelector('h2').textContent;
+      a.dataset.for=t.id;
+      nav.appendChild(a);
+    });
+  });
+  const links=[...nav.querySelectorAll('a')];
+
+  const cache=topics.map(t=>({el:t,text:(t.dataset.group+' '+(t.dataset.tag||'')+' '+t.textContent).toLowerCase()}));
+  function clearMarks(el){
+    el.querySelectorAll('mark').forEach(m=>{
+      const p=m.parentNode; p.replaceChild(document.createTextNode(m.textContent),m); p.normalize();
+    });
+  }
+  function highlight(el,q){
+    const walk=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{
+      acceptNode:n=>n.parentNode.closest('svg,script,style')?NodeFilter.FILTER_REJECT
+        :(n.nodeValue.toLowerCase().includes(q)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT)});
+    const hits=[]; while(walk.nextNode()) hits.push(walk.currentNode);
+    hits.slice(0,120).forEach(n=>{
+      const i=n.nodeValue.toLowerCase().indexOf(q); if(i<0) return;
+      const after=n.splitText(i); after.splitText(q.length);
+      const m=document.createElement('mark'); m.textContent=after.nodeValue;
+      after.parentNode.replaceChild(m,after);
+    });
+  }
+  function run(){
+    const q=search.value.trim().toLowerCase();
+    let shown=0;
+    cache.forEach(({el,text})=>{
+      clearMarks(el);
+      const hit=!q||text.includes(q);
+      el.classList.toggle('hidden',!hit);
+      if(hit){ shown++; if(q) highlight(el,q); }
+    });
+    links.forEach(a=>{
+      const t=document.getElementById(a.dataset.for);
+      a.classList.toggle('hidden',t.classList.contains('hidden'));
+    });
+    nav.querySelectorAll('h4').forEach(h=>{
+      let n=h.nextElementSibling,any=false;
+      while(n&&n.tagName==='A'){ if(!n.classList.contains('hidden')) any=true; n=n.nextElementSibling; }
+      h.classList.toggle('hidden',!any);
+    });
+    empty.style.display=shown?'none':'block';
+    count.textContent=q?shown+' / '+topics.length:topics.length+' topics';
+  }
+  search.addEventListener('input',run);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='/'&&document.activeElement!==search){e.preventDefault();search.focus();}
+    if(e.key==='Escape'&&document.activeElement===search){search.value='';run();search.blur();}
+  });
+  run();
+
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(en=>{
+      if(en.isIntersecting){
+        links.forEach(a=>a.classList.toggle('active',a.dataset.for===en.target.id));
+      }
+    });
+  },{rootMargin:'-70px 0px -75% 0px'});
+  topics.forEach(t=>obs.observe(t));
+
+  const btn=document.getElementById('menubtn');
+  btn.addEventListener('click',()=>nav.classList.toggle('open'));
+  nav.addEventListener('click',e=>{ if(e.target.tagName==='A') nav.classList.remove('open'); });
+})();
+(function(){try{if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){document.querySelectorAll('svg').forEach(function(s){if(s.pauseAnimations)s.pauseAnimations();});}}catch(e){}})();
+</script>
+</body>
+</html>
